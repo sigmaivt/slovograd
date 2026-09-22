@@ -1,0 +1,385 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://slovograd.local/lesson.schema.json",
+  "title": "Словоград — пакет урока, версия схемы 1",
+  "description": "ЧЕРНОВИК. Будет заменён выгрузкой из Zod-схемы (npm run schema, задача B2). Источник правды — src/schema/lesson.ts.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "title",
+    "focusOrthograms",
+    "rules",
+    "words"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]{3,64}$",
+      "description": "Например 2026-09-21-upr45"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 80
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "textbook",
+            "workbook",
+            "dictionary",
+            "notebook",
+            "other"
+          ]
+        },
+        "ref": {
+          "type": "string",
+          "maxLength": 120
+        }
+      }
+    },
+    "dictationDate": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "focusOrthograms": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/orthogramCode"
+      }
+    },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "code",
+          "kidExplanation",
+          "steps",
+          "examples"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "$ref": "#/$defs/orthogramCode"
+          },
+          "kidExplanation": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 400
+          },
+          "steps": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 4,
+            "items": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 120
+            }
+          },
+          "examples": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 4,
+            "items": {
+              "type": "string",
+              "maxLength": 80
+            }
+          }
+        }
+      }
+    },
+    "words": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 20,
+      "items": {
+        "$ref": "#/$defs/word"
+      }
+    },
+    "readingText": {
+      "type": "object",
+      "required": [
+        "text"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 40,
+          "maxLength": 800
+        },
+        "questions": {
+          "type": "array",
+          "maxItems": 4,
+          "items": {
+            "type": "object",
+            "required": [
+              "q",
+              "options",
+              "answer"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "q": {
+                "type": "string",
+                "maxLength": 160
+              },
+              "options": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 4,
+                "items": {
+                  "type": "string",
+                  "maxLength": 80
+                }
+              },
+              "answer": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "orthogramCode": {
+      "enum": [
+        "ROOT_VOWEL_CHECK",
+        "ROOT_DICT",
+        "ROOT_PAIRED_CONS",
+        "ROOT_SILENT_CONS",
+        "DOUBLE_CONS",
+        "HUSHING",
+        "SEP_SIGNS",
+        "SOFT_SIGN_NOUN",
+        "PREFIX_PREP",
+        "NOUN_ENDING",
+        "ADJ_ENDING",
+        "VERB_ENDING",
+        "VERB_SOFT_SIGN",
+        "TSYA",
+        "NE_VERB",
+        "PAST_SUFFIX",
+        "ADVERB_O_A",
+        "PRON_PREP",
+        "SUFFIX_IK_EK",
+        "SUFFIX_CUB",
+        "SUFFIX_DIM",
+        "SUFFIX_CONST",
+        "SUFFIX_O_E_HUSH",
+        "SOFT_SIGN_MARK",
+        "PREFIX_SPELL",
+        "COMPOUND_VOWEL",
+        "CAPITAL_PROPER",
+        "ADJ_GENDER"
+      ]
+    },
+    "cyrillicWord": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 24,
+      "pattern": "^[а-яёА-ЯЁ-]+$"
+    },
+    "word": {
+      "type": "object",
+      "required": [
+        "id",
+        "text",
+        "stressIndex",
+        "orthograms"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^w[0-9]{1,3}$"
+        },
+        "text": {
+          "$ref": "#/$defs/cyrillicWord"
+        },
+        "emoji": {
+          "type": "string",
+          "maxLength": 8
+        },
+        "context": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "stressIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Индекс ударной гласной, с нуля. Жёсткая проверка: по этому индексу должна стоять гласная."
+        },
+        "syllables": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Необязательно. Переопределяет алгоритм слогоделения для слов-исключений."
+        },
+        "orthograms": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "items": {
+            "$ref": "#/$defs/orthogram"
+          }
+        }
+      }
+    },
+    "orthogram": {
+      "type": "object",
+      "required": [
+        "type",
+        "index",
+        "length",
+        "correct",
+        "distractors",
+        "method",
+        "confidence",
+        "needsReview"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "$ref": "#/$defs/orthogramCode"
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "length": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4
+        },
+        "correct": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4
+        },
+        "distractors": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4
+          }
+        },
+        "method": {
+          "$ref": "#/$defs/method"
+        },
+        "confidence": {
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ]
+        },
+        "needsReview": {
+          "type": "boolean"
+        }
+      }
+    },
+    "method": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "checkWord",
+            "checkStressIndex"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "check_word"
+            },
+            "checkWord": {
+              "$ref": "#/$defs/cyrillicWord"
+            },
+            "checkStressIndex": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "mnemonic"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "mnemonic"
+            },
+            "mnemonic": {
+              "type": "string",
+              "minLength": 10,
+              "maxLength": 300
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "steps"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "algorithm"
+            },
+            "steps": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 5,
+              "items": {
+                "type": "string",
+                "maxLength": 120
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "remember"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

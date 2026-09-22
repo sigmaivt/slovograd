@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-09-21-upr45",
+  "title": "Безударные гласные в корне",
+  "source": { "type": "textbook", "ref": "Упр. 45, с. 32" },
+  "dictationDate": "2026-09-25",
+  "focusOrthograms": ["ROOT_VOWEL_CHECK", "ROOT_DICT"],
+  "rules": [
+    {
+      "code": "ROOT_VOWEL_CHECK",
+      "kidExplanation": "Гласная без ударения прячется. Измени слово, чтобы на неё упало ударение, — и она скажет своё имя.",
+      "steps": ["Найди корень", "Найди гласную без ударения", "Измени слово или подбери родственное", "Пиши ту букву, что слышна под ударением"],
+      "examples": ["трава — травы", "гора — горы"]
+    }
+  ],
+  "words": [
+    {
+      "id": "w1",
+      "text": "трава",
+      "emoji": "🌿",
+      "context": "Зелёная трава",
+      "stressIndex": 4,
+      "orthograms": [
+        {
+          "type": "ROOT_VOWEL_CHECK",
+          "index": 2,
+          "length": 1,
+          "correct": "а",
+          "distractors": ["о"],
+          "method": { "kind": "check_word", "checkWord": "травы", "checkStressIndex": 2 },
+          "confidence": "high",
+          "needsReview": false
+        }
+      ]
+    },
+    {
+      "id": "w2",
+      "text": "вокзал",
+      "emoji": "🚉",
+      "context": "Поезд прибыл на вокзал",
+      "stressIndex": 4,
+      "orthograms": [
+        {
+          "type": "ROOT_DICT",
+          "index": 1,
+          "length": 1,
+          "correct": "о",
+          "distractors": ["а"],
+          "method": { "kind": "mnemonic", "mnemonic": "На вокзал приезжает поезд, у него круглые колёса — как буква О" },
+          "confidence": "high",
+          "needsReview": false
+        }
+      ]
+    }
+  ],
+  "readingText": {
+    "text": "Утром мы пошли на вокзал. У дороги росла высокая трава...",
+    "questions": [{ "q": "Куда пошли утром?", "options": ["на вокзал", "в лес"], "answer": 0 }]
+  }
+}

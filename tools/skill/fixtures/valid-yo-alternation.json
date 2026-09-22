@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1, "id": "yo-test", "title": "Чередование ё/е",
+  "focusOrthograms": ["ROOT_VOWEL_CHECK"], "rules": [],
+  "words": [
+    { "id": "w1", "text": "весна", "stressIndex": 4, "orthograms": [
+      { "type": "ROOT_VOWEL_CHECK", "index": 1, "length": 1, "correct": "е", "distractors": ["и"],
+        "method": { "kind": "check_word", "checkWord": "вёсны", "checkStressIndex": 1 },
+        "confidence": "high", "needsReview": false } ] },
+    { "id": "w2", "text": "пчела", "stressIndex": 4, "orthograms": [
+      { "type": "ROOT_VOWEL_CHECK", "index": 2, "length": 1, "correct": "е", "distractors": ["и"],
+        "method": { "kind": "check_word", "checkWord": "пчёлы", "checkStressIndex": 2 },
+        "confidence": "high", "needsReview": false } ] },
+    { "id": "w3", "text": "гора", "stressIndex": 3, "orthograms": [
+      { "type": "ROOT_VOWEL_CHECK", "index": 1, "length": 1, "correct": "о", "distractors": ["а"],
+        "method": { "kind": "check_word", "checkWord": "горы", "checkStressIndex": 1 },
+        "confidence": "high", "needsReview": false } ] }
+  ]
+}

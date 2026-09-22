@@ -1,0 +1,440 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-09-22-upr111",
+  "title": "Упр. 111: правописание суффиксов",
+  "source": {
+    "type": "textbook",
+    "ref": "Упр. 111"
+  },
+  "focusOrthograms": [
+    "SUFFIX_IK_EK",
+    "SUFFIX_CUB",
+    "SUFFIX_DIM",
+    "SUFFIX_CONST"
+  ],
+  "rules": [
+    {
+      "code": "SUFFIX_IK_EK",
+      "kidExplanation": "Скажи слово со словом «нет». Буква пропала — пиши {е}. Осталась — пиши {и}.",
+      "steps": [
+        "Скажи: нет мячика, нет овражка",
+        "Буква осталась — пиши {и}",
+        "Буква пропала — пиши {е}"
+      ],
+      "examples": [
+        "мяч{и}к — нет мяч{и}ка",
+        "овраж{е}к — нет овражка"
+      ]
+    },
+    {
+      "code": "SUFFIX_CUB",
+      "kidExplanation": "Это детёныши. После ж, ч, ш, щ пиши {о} или {а}. После других букв — {ё} или {я}.",
+      "steps": [
+        "Посмотри на букву перед суффиксом",
+        "Это ж, ч, ш или щ — пиши {о} или {а}",
+        "Другая буква — пиши {ё} или {я}"
+      ],
+      "examples": [
+        "еж{о}нок, зайч{а}та",
+        "олен{ё}нок, ут{я}та"
+      ]
+    },
+    {
+      "code": "SUFFIX_DIM",
+      "kidExplanation": "Это ласковые слова. Перед суффиксом твёрдый звук — пиши {о}. Мягкий — пиши {е}.",
+      "steps": [
+        "Найди ласковый суффикс",
+        "Послушай звук перед ним",
+        "Твёрдый — пиши {о}",
+        "Мягкий — пиши {е}"
+      ],
+      "examples": [
+        "берёз{о}нька, сказ{о}чка",
+        "доч{е}нька, реч{е}нька"
+      ]
+    },
+    {
+      "code": "SUFFIX_CONST",
+      "kidExplanation": "Некоторые суффиксы всегда пишутся одинаково: -{о}сть, -т{е}ль, -н{и}к, -{а}рь. Их надо просто запомнить.",
+      "steps": [
+        "Найди суффикс в конце слова",
+        "Узнай его: -{о}сть, -т{е}ль, -н{и}к, -{а}рь",
+        "Пиши его так же, как всегда"
+      ],
+      "examples": [
+        "смел{о}сть, радость",
+        "учит{е}ль, библиотек{а}рь"
+      ]
+    }
+  ],
+  "words": [
+    {
+      "id": "w1",
+      "text": "мячик",
+      "emoji": "⚽",
+      "context": "Мячик укатился под скамейку.",
+      "stressIndex": 1,
+      "orthograms": [
+        {
+          "type": "SUFFIX_IK_EK",
+          "index": 3,
+          "length": 1,
+          "correct": "и",
+          "distractors": [
+            "е"
+          ],
+          "method": {
+            "kind": "algorithm",
+            "steps": [
+              "Скажи со словом «нет»: нет мячика",
+              "Гласная осталась на месте",
+              "Значит, пиши и: мячик"
+            ]
+          },
+          "confidence": "high",
+          "needsReview": false
+        }
+      ]
+    },
+    {
+      "id": "w2",
+      "text": "кораблик",
+      "emoji": "⛵",
+      "context": "Мы пустили кораблик по ручью.",
+      "stressIndex": 3,
+      "orthograms": [
+        {
+          "type": "SUFFIX_IK_EK",
+          "index": 6,
+          "length": 1,
+          "correct": "и",
+          "distractors": [
+            "е"
+          ],
+          "method": {
+            "kind": "algorithm",
+            "steps": [
+              "Скажи со словом «нет»: нет кораблика",
+              "Гласная осталась на месте",
+              "Значит, пиши и: кораблик"
+            ]
+          },
+          "confidence": "high",
+          "needsReview": false
+        }
+      ]
+    },
+    {
+      "id": "w3",
+      "text": "билетик",
+      "emoji": "🎫",
+      "context": "Мама купила билетик в театр.",
+      "stressIndex": 3,
+      "orthograms": [
+        {
+          "type": "SUFFIX_IK_EK",
+          "index": 5,
+          "length": 1,
+          "correct": "и",
+          "distractors": [
+            "е"
+          ],
+          "method": {
+            "kind": "algorithm",
+            "steps": [
+              "Скажи со словом «нет»: нет билетика",
+              "Гласная осталась на месте",
+              "Значит, пиши и: билетик"
+            ]
+          },
+          "confidence": "high",
+          "needsReview": false
+        }
+      ]
+    },
+    {
+      "id": "w4",
+      "text": "овражек",
+      "emoji": "🏞️",
+      "context": "За домом был небольшой овражек.",
+      "stressIndex": 3,
+      "orthograms": [
+        {
+          "type": "SUFFIX_IK_EK",
+          "index": 5,
+          "length": 1,
+          "correct": "е",
+          "distractors": [
+            "и"
+          ],
+          "method": {
+            "kind": "algorithm",
+            "steps": [
+              "Скажи со словом «нет»: нет овражка",
+              "Гласная убежала",
+              "Значит, пиши е: овражек"
+            ]
+          },
+          "confidence": "high",
+          "needsReview": false
+        }
+      ]
+    },
+    {
+      "id": "w5",
+      "text": "ежонок",
+      "emoji": "🦔",
+      "context": "Ежонок нашёл в траве яблоко.",
+      "stressIndex": 2,
+      "orthograms": [
+        {
+          "type": "SUFFIX_CUB",
+          "index": 2,
+          "length": 1,
+          "correct": "о",
+          "distractors": [
+            "ё"
+          ],
+          "method": {
+            "kind": "algorithm",
+            "steps": [
+              "Перед суффиксом стоит ж",
+              "После ж, ч, ш, щ пиши -онок",
+              "Значит, ежонок"
+            ]
+          },
+          "confidence": "high",
+          "needsReview": false
+        }
+      ]
+    },
+    {
+      "id": "w6",
+      "text": "оленёнок",
+      "emoji": "🦌",
+      "context": "Оленёнок бежит за мамой.",
+      "stressIndex": 4,
+      "orthograms": [
+        {
+          "type": "SUFFIX_CUB",
+          "index": 4,
+          "length": 1,
+          "correct": "ё",
+          "distractors": [
+            "о"
+          ],
+          "method": {
+            "kind": "algorithm",
+            "steps": [
+              "Перед суффиксом стоит н",
+              "Это не ж, ч, ш, щ — пиши -ёнок",
+              "Значит, оленёнок"
+            ]
+          },
+          "confidence": "high",
+          "needsReview": false
+        }
+      ]
+    },
+    {
+      "id": "w7",
+      "text": "утята",
+      "emoji": "🦆",
+      "context": "Утята плывут за уткой.",
+      "stressIndex": 2,
+      "orthograms": [
+        {
+          "type": "SUFFIX_CUB",
+          "index": 2,
+          "length": 1,
+          "correct": "я",
+          "distractors": [
+            "а"
+          ],
+          "method": {
+            "kind": "algorithm",
+            "steps": [
+              "Скажи про одного: утёнок",
+              "Перед суффиксом т — не ж, ч, ш, щ, значит -ёнок",
+              "Когда их много — -ята: утята"
+            ]
+          },
+          "confidence": "medium",
+          "needsReview": true
+        }
+      ]
+    },
+    {
+      "id": "w10",
+      "text": "берёзонька",
+      "emoji": "🌳",
+      "context": "Во дворе растёт берёзонька.",
+      "stressIndex": 3,
+      "orthograms": [
+        {
+          "type": "SUFFIX_DIM",
+          "index": 5,
+          "length": 1,
+          "correct": "о",
+          "distractors": [
+            "е"
+          ],
+          "method": {
+            "kind": "algorithm",
+            "steps": [
+              "Перед суффиксом стоит з",
+              "З твёрдая: берёза, а не берёзя",
+              "После твёрдой пиши о: берёзонька"
+            ]
+          },
+          "confidence": "high",
+          "needsReview": false
+        }
+      ]
+    },
+    {
+      "id": "w11",
+      "text": "сказочка",
+      "emoji": "📖",
+      "context": "Какая добрая сказочка!",
+      "stressIndex": 2,
+      "orthograms": [
+        {
+          "type": "SUFFIX_DIM",
+          "index": 4,
+          "length": 1,
+          "correct": "о",
+          "distractors": [
+            "е"
+          ],
+          "method": {
+            "kind": "algorithm",
+            "steps": [
+              "Перед суффиксом стоит з",
+              "З твёрдая: сказка",
+              "После твёрдой пиши о: сказочка"
+            ]
+          },
+          "confidence": "high",
+          "needsReview": false
+        }
+      ]
+    },
+    {
+      "id": "w12",
+      "text": "ельник",
+      "emoji": "🌲",
+      "context": "За рекой начинается густой ельник.",
+      "stressIndex": 0,
+      "orthograms": [
+        {
+          "type": "SUFFIX_CONST",
+          "index": 4,
+          "length": 1,
+          "correct": "и",
+          "distractors": [
+            "е"
+          ],
+          "method": {
+            "kind": "remember"
+          },
+          "confidence": "high",
+          "needsReview": false
+        }
+      ]
+    },
+    {
+      "id": "w13",
+      "text": "учитель",
+      "emoji": "🧑‍🏫",
+      "context": "Учитель проверил наши тетради.",
+      "stressIndex": 2,
+      "orthograms": [
+        {
+          "type": "SUFFIX_CONST",
+          "index": 4,
+          "length": 1,
+          "correct": "е",
+          "distractors": [
+            "и"
+          ],
+          "method": {
+            "kind": "remember"
+          },
+          "confidence": "high",
+          "needsReview": false
+        }
+      ]
+    },
+    {
+      "id": "w14",
+      "text": "смелость",
+      "emoji": "🦁",
+      "context": "Пожарному нужна смелость.",
+      "stressIndex": 2,
+      "orthograms": [
+        {
+          "type": "SUFFIX_CONST",
+          "index": 4,
+          "length": 1,
+          "correct": "о",
+          "distractors": [
+            "а"
+          ],
+          "method": {
+            "kind": "remember"
+          },
+          "confidence": "high",
+          "needsReview": false
+        }
+      ]
+    },
+    {
+      "id": "w15",
+      "text": "библиотекарь",
+      "emoji": "📚",
+      "context": "Библиотекарь нашёл для меня книгу.",
+      "stressIndex": 7,
+      "orthograms": [
+        {
+          "type": "SUFFIX_CONST",
+          "index": 9,
+          "length": 1,
+          "correct": "а",
+          "distractors": [
+            "о",
+            "е"
+          ],
+          "method": {
+            "kind": "remember"
+          },
+          "confidence": "high",
+          "needsReview": false
+        }
+      ]
+    }
+  ],
+  "readingText": {
+    "text": "Утром учитель повёл нас в ельник. Рюкзак у меня был совсем не тяжёлый. Под берёзонькой спал ежонок, а у ручья гуляли утята. Из овражка выглянул оленёнок. В траве я нашла маленький мячик. Вечером я прочитала сказочку про кораблик, который не побоялся бури. Эту книгу о смелости мне дал библиотекарь.",
+    "questions": [
+      {
+        "q": "Куда учитель повёл ребят утром?",
+        "options": [
+          "в библиотеку",
+          "в ельник",
+          "на речку"
+        ],
+        "answer": 1
+      },
+      {
+        "q": "Кто выглянул из овражка?",
+        "options": [
+          "ежонок",
+          "утята",
+          "оленёнок"
+        ],
+        "answer": 2
+      }
+    ]
+  }
+}

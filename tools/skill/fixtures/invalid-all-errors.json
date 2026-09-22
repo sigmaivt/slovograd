@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "broken-test",
+  "title": "Урок со всеми ошибками сразу",
+  "focusOrthograms": ["ROOT_VOWEL_CHECK"],
+  "rules": [],
+  "words": [
+    { "id": "w1", "text": "трава", "stressIndex": 3,
+      "orthograms": [ { "type": "ROOT_VOWEL_CHECK", "index": 2, "length": 1, "correct": "а",
+        "distractors": ["о"], "method": { "kind": "check_word", "checkWord": "травы", "checkStressIndex": 2 },
+        "confidence": "high", "needsReview": false } ] },
+
+    { "id": "w2", "text": "корова", "stressIndex": 3,
+      "orthograms": [ { "type": "ROOT_DICT", "index": 1, "length": 1, "correct": "а",
+        "distractors": ["а", "о"], "method": { "kind": "mnemonic", "mnemonic": "Просто запомни это слово навсегда" },
+        "confidence": "medium", "needsReview": false } ] },
+
+    { "id": "w3", "text": "вода", "stressIndex": 3,
+      "orthograms": [ { "type": "ROOT_VOWEL_CHECK", "index": 1, "length": 1, "correct": "о",
+        "distractors": ["а"], "method": { "kind": "check_word", "checkWord": "вода", "checkStressIndex": 3 },
+        "confidence": "high", "needsReview": false } ] },
+
+    { "id": "w4", "text": "лес", "stressIndex": 1,
+      "orthograms": [ { "type": "МОЙ_КОД", "index": 0, "length": 1, "correct": "л",
+        "distractors": ["р"], "method": { "kind": "remember" }, "confidence": "low", "needsReview": false } ] },
+
+    { "id": "w1", "text": "сад", "stressIndex": 1,
+      "orthograms": [
+        { "type": "ROOT_VOWEL_CHECK", "index": 0, "length": 2, "correct": "са",
+          "distractors": ["со"], "method": { "kind": "check_word", "checkWord": "сады", "checkStressIndex": 3 },
+          "confidence": "high", "needsReview": false },
+        { "type": "ROOT_PAIRED_CONS", "index": 1, "length": 2, "correct": "ад",
+          "distractors": ["ат"], "method": { "kind": "remember" }, "confidence": "high", "needsReview": false } ] },
+
+    { "id": "w6", "text": "окно", "stressIndex": 3,
+      "orthograms": [ { "type": "ROOT_VOWEL_CHECK", "index": 0, "length": 1, "correct": "о",
+        "distractors": ["а"], "method": { "kind": "check_word", "checkWord": "стёкла", "checkStressIndex": 2 },
+        "confidence": "high", "needsReview": false } ] }
+  ]
+}

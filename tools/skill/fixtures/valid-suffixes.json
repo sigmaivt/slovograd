@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "id": "fixture-suffixes",
+  "title": "Суффиксы существительных",
+  "source": { "type": "textbook", "ref": "Упр. 111" },
+  "focusOrthograms": ["SUFFIX_IK_EK", "SUFFIX_CUB", "SUFFIX_DIM", "SUFFIX_CONST"],
+  "rules": [
+    {
+      "code": "SUFFIX_IK_EK",
+      "kidExplanation": "Скажи слово со словом НЕТ. Если гласная осталась на месте — пиши И. Если убежала — пиши Е.",
+      "steps": [
+        "Найди суффикс в конце слова",
+        "Скажи: нет кого? нет чего?",
+        "Гласная осталась — пиши И",
+        "Гласная убежала — пиши Е"
+      ],
+      "examples": ["мячик — нет мячика, И осталась", "овражек — нет овражка, Е убежала"]
+    },
+    {
+      "code": "SUFFIX_CUB",
+      "kidExplanation": "Детёныши бывают на -онок и на -ёнок. После шипящих Ж, Ч, Ш, Щ пиши О. После всех остальных букв пиши Ё.",
+      "steps": [
+        "Найди суффикс детёныша",
+        "Посмотри на букву перед ним",
+        "Это ж, ч, ш или щ — пиши -онок",
+        "Любая другая буква — пиши -ёнок"
+      ],
+      "examples": ["медвежонок — после ж пишем о", "оленёнок — после н пишем ё"]
+    },
+    {
+      "code": "SUFFIX_DIM",
+      "kidExplanation": "Ласковые суффиксы выбирают гласную по соседу слева. После твёрдой согласной пиши О, после мягкой и шипящей — Е.",
+      "steps": [
+        "Найди ласковый суффикс",
+        "Послушай согласную перед ним",
+        "Согласная твёрдая — пиши О",
+        "Согласная мягкая — пиши Е"
+      ],
+      "examples": ["берёзонька — з твёрдая, пишем о", "доченька — ч мягкая, пишем е"]
+    },
+    {
+      "code": "SUFFIX_CONST",
+      "kidExplanation": "Некоторые суффиксы всегда пишутся одинаково. Проверять их нечем — надо просто узнать суффикс в слове.",
+      "steps": [
+        "Найди суффикс",
+        "Узнай его: -ость, -тель, -ник, -арь",
+        "Пиши его всегда одинаково"
+      ],
+      "examples": ["смелость — суффикс -ость, всегда с о", "учитель — суффикс -тель, всегда с е"]
+    }
+  ],
+  "words": [
+    {
+      "id": "w1", "text": "мячик", "emoji": "⚽", "context": "Мячик закатился под диван.", "stressIndex": 1,
+      "orthograms": [{
+        "type": "SUFFIX_IK_EK", "index": 3, "length": 1, "correct": "и", "distractors": ["е"],
+        "method": { "kind": "algorithm", "steps": ["Скажи: нет мячика", "Гласная осталась", "Значит пиши И"] },
+        "confidence": "high", "needsReview": false
+      }]
+    },
+    {
+      "id": "w2", "text": "овражек", "emoji": "🏞️", "context": "За домом начинался овражек.", "stressIndex": 3,
+      "orthograms": [{
+        "type": "SUFFIX_IK_EK", "index": 5, "length": 1, "correct": "е", "distractors": ["и"],
+        "method": { "kind": "algorithm", "steps": ["Скажи: нет овражка", "Гласная убежала", "Значит пиши Е"] },
+        "confidence": "high", "needsReview": false
+      }]
+    },
+    {
+      "id": "w3", "text": "медвежонок", "emoji": "🐻", "context": "Медвежонок полез на дерево.", "stressIndex": 6,
+      "orthograms": [{
+        "type": "SUFFIX_CUB", "index": 6, "length": 1, "correct": "о", "distractors": ["ё"],
+        "method": { "kind": "algorithm", "steps": ["Перед суффиксом буква ж", "Ж — шипящая", "После шипящей пиши О"] },
+        "confidence": "high", "needsReview": false
+      }]
+    },
+    {
+      "id": "w4", "text": "оленёнок", "emoji": "🦌", "context": "Оленёнок бежит за мамой.", "stressIndex": 4,
+      "orthograms": [{
+        "type": "SUFFIX_CUB", "index": 4, "length": 1, "correct": "ё", "distractors": ["о"],
+        "method": { "kind": "algorithm", "steps": ["Перед суффиксом буква н", "Н не шипящая", "Значит пиши Ё"] },
+        "confidence": "high", "needsReview": false
+      }]
+    },
+    {
+      "id": "w5", "text": "берёзонька", "emoji": "🌳", "context": "Во дворе растёт берёзонька.", "stressIndex": 3,
+      "orthograms": [{
+        "type": "SUFFIX_DIM", "index": 5, "length": 1, "correct": "о", "distractors": ["е"],
+        "method": { "kind": "algorithm", "steps": ["Перед суффиксом буква з", "З здесь твёрдая", "Значит пиши О"] },
+        "confidence": "high", "needsReview": false
+      }]
+    },
+    {
+      "id": "w6", "text": "смелость", "emoji": "🦁", "context": "Смелость города берёт.", "stressIndex": 2,
+      "orthograms": [{
+        "type": "SUFFIX_CONST", "index": 4, "length": 1, "correct": "о", "distractors": ["а"],
+        "method": { "kind": "remember" },
+        "confidence": "high", "needsReview": false
+      }]
+    }
+  ]
+}

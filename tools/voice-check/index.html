@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Словоград — проверка голоса</title>
+<style>
+  :root { --bg:#faf7f2; --fg:#1d1b18; --line:#d9d2c6; --ok:#1f7a3d; --bad:#b3261e; --warn:#a15c00; --accent:#e8710a; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:16px 14px 64px; font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;
+         background:var(--bg); color:var(--fg); -webkit-text-size-adjust:100%; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  h2 { font-size:15px; margin:28px 0 10px; text-transform:uppercase; letter-spacing:.06em; color:#6b6459; }
+  .sub { color:#6b6459; font-size:14px; margin:0 0 20px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:12px; }
+  .verdict { font-size:17px; font-weight:700; padding:14px; border-radius:12px; margin-bottom:16px; }
+  .v-ok   { background:#e4f3e8; color:var(--ok);   border:2px solid var(--ok); }
+  .v-bad  { background:#fdeceb; color:var(--bad);  border:2px solid var(--bad); }
+  .v-warn { background:#fdf1e0; color:var(--warn); border:2px solid var(--warn); }
+  button { font:inherit; font-weight:600; min-height:56px; padding:14px 16px; border-radius:12px;
+           border:2px solid var(--fg); background:#fff; color:var(--fg); cursor:pointer; width:100%; }
+  button:active { transform:translateY(1px); }
+  button.accent { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+  .word { font-size:30px; font-weight:800; letter-spacing:.04em; }
+  .word .stress { color:var(--accent); text-decoration:underline; text-underline-offset:5px; }
+  .hint { font-size:13px; color:#6b6459; margin-top:6px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  td { padding:7px 4px; border-bottom:1px solid var(--line); vertical-align:top; }
+  td:first-child { font-weight:600; }
+  .tag { display:inline-block; font-size:11px; font-weight:700; padding:2px 7px; border-radius:99px; }
+  .t-local { background:#e4f3e8; color:var(--ok); }
+  .t-cloud { background:#fdeceb; color:var(--bad); }
+  label { display:block; font-size:13px; color:#6b6459; margin:14px 0 4px; }
+  input[type=range] { width:100%; height:40px; }
+  ol { padding-left:20px; } li { margin-bottom:8px; }
+</style>
+</head>
+<body>
+
+<h1>Словоград — проверка голоса</h1>
+<p class="sub">Задача 0.1. Открой на <b>том телефоне, где будет играть дочка</b>.</p>
+
+<div id="verdict" class="verdict v-warn">Загружаю список голосов…</div>
+
+<h2>1. Главный тест — офлайн</h2>
+<div class="card">
+  <ol style="margin:0">
+    <li>Включи на телефоне <b>авиарежим</b> (или выключи Wi-Fi и мобильный интернет).</li>
+    <li>Не перезагружая страницу, нажми кнопку ниже.</li>
+    <li>Если звука нет — голос облачный, и офлайн-приложение с синтезом работать не будет.</li>
+  </ol>
+  <div style="margin-top:12px"><button class="accent" id="bLong">🔊 Сказать длинную фразу</button></div>
+</div>
+
+<h2>2. Слова урока</h2>
+<div class="card">
+  <div class="word" id="w">трава</div>
+  <div class="hint" id="wh"></div>
+  <div class="row">
+    <button id="bNat">🔊 Как говорим</button>
+    <button id="bSpell">🐢 Как пишем</button>
+  </div>
+  <div class="row">
+    <button id="bNext">Следующее слово →</button>
+    <button id="bLetters">А-Б-В По буквам</button>
+  </div>
+</div>
+
+<h2>3. Ударение — врёт или нет</h2>
+<div class="card">
+  <p class="hint" style="margin-top:0">Пары различаются <b>только ударением</b>. Если синтез читает обе одинаково — на ударения полагаться нельзя, нужна запись голоса.</p>
+  <div id="pairs"></div>
+</div>
+
+<h2>4. Скорость</h2>
+<div class="card">
+  <label>Скорость речи: <b id="rateVal">0.9</b></label>
+  <input type="range" id="rate" min="0.5" max="1.3" step="0.05" value="0.9">
+  <button style="margin-top:10px" id="bInstr">🔊 Проверить на инструкции</button>
+  <p class="hint">Для 10-летнего ребёнка обычно комфортно 0.85–0.95.</p>
+</div>
+
+<h2>6. Как победить аканье</h2>
+<div class="card">
+  <p class="hint" style="margin-top:0">Движок читает безударную <b>о</b> как <b>а</b>: «КАрова». Для режима «как пишем» это
+  недопустимо. Ищем способ, который движок уважает. Нажимай по очереди и слушай <b>первую гласную</b>.</p>
+  <div class="word" id="rw">корова</div>
+  <div class="row"><button id="rPrev">← слово</button><button id="rNext">слово →</button></div>
+  <div id="tricks"></div>
+  <p class="hint">Годится тот способ, где первая гласная звучит как <b>О</b>, а не как <b>А</b>.</p>
+</div>
+
+<h2>5. Голоса на устройстве</h2>
+<div class="card"><table id="voices"><tr><td>Загружаю…</td></tr></table></div>
+
+<script>
+const WORDS = [
+  { t: "трава",        s: 4, note: "ROOT_VOWEL_CHECK · проверочное: травы" },
+  { t: "вокзал",       s: 4, note: "ROOT_DICT · словарное" },
+  { t: "корова",       s: 3, note: "словарное · классика проговаривания ко-ро-ва" },
+  { t: "лестница",     s: 1, note: "ROOT_SILENT_CONS · непроизносимая т" },
+  { t: "здравствуйте", s: 8, note: "ROOT_SILENT_CONS · длинное, проверка на сбой" },
+  { t: "солнце",       s: 1, note: "ROOT_SILENT_CONS · непроизносимая л" },
+  { t: "аллея",        s: 3, note: "DOUBLE_CONS · двойная л" },
+  { t: "жизнь",        s: 1, note: "HUSHING · жи-ши" },
+  { t: "роща",         s: 1, note: "HUSHING · ча-ща" },
+  { t: "объявление",   s: 6, note: "SEP_SIGNS · разделительный ъ" }
+];
+
+const PAIRS = [
+  { a: "за́мок",  b: "замо́к",  w: "замок"  },
+  { a: "му́ка",   b: "мука́",   w: "мука"   },
+  { a: "кру́жки", b: "кружки́", w: "кружки" },
+  { a: "пла́чу",  b: "плачу́",  w: "плачу"  }
+];
+
+let voices = [], ru = null, idx = -1;
+
+const VOW = "аеёиоуыэюя";
+
+// Слог = согласные + гласная. Между гласными считаем не символы, а ЕДИНИЦЫ:
+// согласная вместе с прилипшими к ней ь и й. Из N единиц (N-1) остаются
+// в текущем слоге, последняя уходит в следующий. Твёрдый знак всегда
+// закрывает текущий слог: объ-яв-ле-ни-е.
+function syllables(word) {
+  const ch = Array.from(word.toLowerCase());
+  const out = [];
+  let cur = "";
+  let i = 0;
+
+  while (i < ch.length) {
+    // набираем согласные до первой гласной
+    while (i < ch.length && !VOW.includes(ch[i])) { cur += ch[i]; i++; }
+    if (i >= ch.length) break;
+
+    cur += ch[i]; // гласная
+    i++;
+
+    // кластер согласных до следующей гласной
+    const start = i;
+    while (i < ch.length && !VOW.includes(ch[i])) i++;
+    const cluster = ch.slice(start, i);
+
+    if (i >= ch.length) { cur += cluster.join(""); break; } // хвост слова
+
+    // твёрдый знак закрывает слог: всё по него включительно остаётся
+    const hard = cluster.lastIndexOf("ъ");
+    if (hard !== -1) {
+      cur += cluster.slice(0, hard + 1).join("");
+      out.push(cur);
+      cur = cluster.slice(hard + 1).join("");
+      continue;
+    }
+
+    // режем кластер на единицы: согласная + прилипшие ь/й
+    const units = [];
+    for (const c of cluster) {
+      if ("ьй".includes(c) && units.length) units[units.length - 1] += c;
+      else units.push(c);
+    }
+
+    // Шумная + л/р — обычное начало слога (би-бли-о-те-ка), уходят вместе.
+    // А вот "тн" слог начать не может, поэтому лест-ни-ца.
+    let keep = units.length - 1;
+    if (units.length >= 2) {
+      const a = units[units.length - 2], b = units[units.length - 1];
+      if (!"лмнрй".includes(a[0]) && "лр".includes(b[0])) keep = units.length - 2;
+    }
+
+    cur += units.slice(0, keep).join("");
+    out.push(cur);
+    cur = units.slice(keep).join("");
+  }
+
+  // Остаток с гласной — самостоятельный слог. Безгласный хвост (слог не
+  // образует) приклеиваем к предыдущему: "жизнь" остаётся одним слогом.
+  if (cur) {
+    const hasVowel = Array.from(cur).some(c => VOW.includes(c));
+    if (hasVowel || !out.length) out.push(cur);
+    else out[out.length - 1] += cur;
+  }
+  return out;
+}
+
+function currentRate() {
+  return parseFloat(document.getElementById("rate").value);
+}
+
+function say(text, rate) {
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "ru-RU";
+  u.rate = (rate === undefined) ? currentRate() : rate;
+  if (ru) u.voice = ru;
+  speechSynthesis.speak(u);
+}
+
+function sayWord(mode) {
+  const w = WORDS[idx];
+  if (mode === "natural") say(w.t);
+  else say(syllables(w.t).join(", "), 0.65);
+}
+
+function nextWord() {
+  idx = (idx + 1) % WORDS.length;
+  const w = WORDS[idx];
+  document.getElementById("w").innerHTML = Array.from(w.t)
+    .map((c, i) => i === w.s ? '<span class="stress">' + c + "</span>" : c)
+    .join("");
+  document.getElementById("wh").textContent = syllables(w.t).join("-") + " · " + w.note;
+}
+
+function renderPairs() {
+  const box = document.getElementById("pairs");
+  box.innerHTML = "";
+  PAIRS.forEach(p => {
+    const row = document.createElement("div");
+    row.className = "row";
+    row.style.marginBottom = "8px";
+    [p.a, p.b].forEach(label => {
+      const btn = document.createElement("button");
+      btn.textContent = label;
+      btn.addEventListener("click", () => say(p.w));
+      row.appendChild(btn);
+    });
+    box.appendChild(row);
+  });
+}
+
+function load() {
+  voices = speechSynthesis.getVoices();
+  if (!voices.length) return;
+
+  const rus = voices.filter(v => (v.lang || "").toLowerCase().startsWith("ru"));
+  const local = rus.filter(v => v.localService);
+  ru = local[0] || rus[0] || null;
+
+  const vd = document.getElementById("verdict");
+  if (!rus.length) {
+    vd.className = "verdict v-bad";
+    vd.innerHTML = "❌ Русского голоса на устройстве НЕТ.<br><small>Синтез не подходит. «Голос папы» переезжает в этап 1.</small>";
+  } else if (local.length) {
+    vd.className = "verdict v-ok";
+    vd.innerHTML = "✅ Есть офлайн-голос: " + local[0].name +
+      "<br><small>Теперь обязательно проверь тест №1 в авиарежиме — флаг localService иногда врёт.</small>";
+  } else {
+    vd.className = "verdict v-warn";
+    vd.innerHTML = "⚠️ Русские голоса есть (" + rus.length + "), но все помечены как облачные." +
+      "<br><small>Проверь тест №1 в авиарежиме. Если тишина — нужна запись голоса.</small>";
+  }
+
+  const list = rus.length ? rus : voices.slice(0, 12);
+  const head = '<tr><td colspan="2" class="hint" style="border:0;padding-bottom:10px">Всего голосов: ' +
+    voices.length + ", русских: " + rus.length + "</td></tr>";
+  document.getElementById("voices").innerHTML = head + list.map(v =>
+    "<tr><td>" + v.name + '<br><span class="hint">' + v.lang + (v.default ? " · по умолчанию" : "") +
+    '</span></td><td style="text-align:right"><span class="tag ' + (v.localService ? "t-local" : "t-cloud") +
+    '">' + (v.localService ? "офлайн" : "облако") + "</span></td></tr>").join("");
+}
+
+// --- Раздел 6: борьба с аканьем -------------------------------------------
+// Движок редуцирует безударную "о" в связной речи. Пробуем пять обходов.
+const RED = ["корова", "молоко", "вода", "сорока", "хорошо", "дорога"];
+let ridx = 0;
+
+// Каждый кусок — ОТДЕЛЬНАЯ фраза. Односложная фраза не редуцируется:
+// движку незачем ослаблять единственную гласную.
+function sayChunks(parts, rate) {
+  speechSynthesis.cancel();
+  parts.forEach(p => {
+    const u = new SpeechSynthesisUtterance(p);
+    u.lang = "ru-RU";
+    u.rate = rate;
+    if (ru) u.voice = ru;
+    speechSynthesis.speak(u);
+  });
+}
+
+// Комбинируемое ударение U+0301 — некоторые движки его читают.
+function withAcute(word) {
+  return Array.from(word).map(c => VOW.includes(c) ? c + "́" : c).join("");
+}
+
+const TRICKS = [
+  { id: "A", name: "A · слоги отдельными фразами",
+    hint: "главная гипотеза",
+    run: w => sayChunks(syllables(w), 0.85) },
+  { id: "B", name: "B · слоги отдельно, медленно",
+    hint: "то же, но 0.5",
+    run: w => sayChunks(syllables(w), 0.5) },
+  { id: "C", name: "C · одна фраза через точки",
+    hint: "ко. ро. ва.",
+    run: w => say(syllables(w).join(". ") + ".", 0.7) },
+  { id: "D", name: "D · знак ударения над гласными",
+    hint: "ко́ро́ва́",
+    run: w => say(withAcute(w), 0.7) },
+  { id: "E", name: "E · по буквам отдельными фразами",
+    hint: "запасной вариант",
+    run: w => sayChunks(Array.from(w), 0.9) }
+];
+
+function renderTricks() {
+  const box = document.getElementById("tricks");
+  box.innerHTML = "";
+  TRICKS.forEach(t => {
+    const btn = document.createElement("button");
+    btn.style.marginTop = "8px";
+    btn.innerHTML = t.name + '<br><span style="font-weight:400;font-size:12px;opacity:.7">' + t.hint + "</span>";
+    btn.addEventListener("click", () => t.run(RED[ridx]));
+    box.appendChild(btn);
+  });
+  const cmp = document.createElement("button");
+  cmp.style.marginTop = "14px";
+  cmp.className = "accent";
+  cmp.textContent = "🔊 Для сравнения: как сейчас";
+  cmp.addEventListener("click", () => say(syllables(RED[ridx]).join(", "), 0.65));
+  box.appendChild(cmp);
+}
+
+function showRed(step) {
+  ridx = (ridx + step + RED.length) % RED.length;
+  document.getElementById("rw").textContent = RED[ridx];
+}
+document.getElementById("rNext").addEventListener("click", () => showRed(1));
+document.getElementById("rPrev").addEventListener("click", () => showRed(-1));
+renderTricks();
+
+document.getElementById("bLong").addEventListener("click", () =>
+  say("Здравствуй! Я Клякса. Я спрятала букву в слове корова."));
+document.getElementById("bNat").addEventListener("click", () => sayWord("natural"));
+document.getElementById("bSpell").addEventListener("click", () => sayWord("spelling"));
+document.getElementById("bNext").addEventListener("click", nextWord);
+document.getElementById("bLetters").addEventListener("click", () =>
+  say(Array.from(WORDS[idx].t).join(", "), 0.7));
+document.getElementById("bInstr").addEventListener("click", () =>
+  say("Найди опасное место в слове. Нажми на букву, где спряталась Клякса."));
+document.getElementById("rate").addEventListener("input", function () {
+  document.getElementById("rateVal").textContent = this.value;
+});
+
+speechSynthesis.onvoiceschanged = load;
+load();
+setTimeout(load, 400);
+setTimeout(load, 1500);
+renderPairs();
+nextWord();
+</script>
+</body>
+</html>
