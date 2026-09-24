@@ -155,6 +155,14 @@
   .gain{text-align:center;font-size:30px;font-weight:800;color:var(--gold);margin:14px 0}
   .gain.big{font-size:56px;margin:10px 0 4px}
 
+  /* правило, применённое к этому слову */
+  .rule-line{display:flex;align-items:center;gap:10px;background:var(--paper);color:var(--pen);
+    border:2px solid #d9d4c2;border-radius:12px;padding:10px 12px;margin:0 0 14px;
+    font-family:var(--hand);font-size:23px;line-height:30px}
+  body.print .rule-line{font-size:16px;line-height:22px}
+  .rule-line .spk{background:#efeadb;border-color:#d9d4c2}
+  .rule-line.center-line{justify-content:center;text-align:center}
+
   /* праздник в конце: салют на холсте + взлетающие шарики */
   #fx{position:fixed;inset:0;pointer-events:none;z-index:4}
   .balloon{position:fixed;left:50%;bottom:-160px;width:64px;pointer-events:none;z-index:3;
@@ -430,6 +438,29 @@ const HINT = {
 // в суффиксе -ек гласная выпадает (овражек — овражка), в -ик остаётся
 // (мячик — мячика). Именно это выпадение и есть проверка, поэтому
 // ошибиться здесь нельзя — подсказка показала бы обратное правилу.
+// Правило, применённое к этому слову. Берём способ проверки из урока,
+// а если его нет (урок по умолчанию) — собираем из типа орфограммы.
+// full=false — только способ проверки, до выбора буквы. Последние шаги
+// алгоритма в уроке обычно называют ответ («значит, пиши и»), и показывать
+// их раньше времени нельзя: выбирать станет нечего.
+function applyRule(w, full){
+  const m = w.m;
+  if(m){
+    if(m.kind === "check_word") return "Проверочное слово: " + m.checkWord;
+    if(m.kind === "mnemonic")   return m.mnemonic;
+    if(m.kind === "algorithm" && m.steps && m.steps.length)
+      return full ? m.steps.join(". ") : m.steps[0];
+  }
+  const before = Array.from(w.t)[w.i - 1] || "";
+  if(w.type === "SUFFIX_IK_EK") return "Скажи: нет " + genitive(w);
+  if(w.type === "SUFFIX_CUB" || w.type === "SUFFIX_DIM")
+    return "Перед суффиксом буква «" + before + "»";
+  // границу суффикса по одной букве не определить, а назвать её неверно
+  // («учитель» → «-ель» вместо «-тель») хуже, чем промолчать
+  if(w.type === "SUFFIX_CONST") return "";
+  return "";
+}
+
 function genitive(w){
   const ch = Array.from(w.t);
   if (w.ok === "е") ch.splice(w.i, 1);
@@ -519,8 +550,10 @@ function convertLesson(data){
     if(!o){ skipped.push(w.text); continue; }
     const bad = (o.distractors || []).find(d => d.length === 1 && d !== o.correct);
     if(!bad){ skipped.push(w.text); continue; }
+    // способ проверки из урока сохраняем: правило нужно показать
+    // применённым к этому самому слову, а не только в общем виде
     words.push({t:w.text, em:w.emoji || "📘", i:o.index, ok:o.correct,
-                bad, type:o.type, ctx:w.context || w.text});
+                bad, type:o.type, ctx:w.context || w.text, m:o.method || null});
   }
   if(words.length < 5)
     throw new Error("Годных слов " + words.length + ", а нужно хотя бы 5.");
@@ -670,11 +703,18 @@ function screenFix(){
   const shown = ch.map((c,k) => k === w.i
       ? '<span class="lit" id="slot">' + w.bad + '</span>' : c).join("");
 
+  // правило, применённое к этому слову: «Скажи: нет овражка»
+  const rule = applyRule(w, false);
+
   screen.innerHTML =
     '<h1>Почини слово</h1>' +
     '<p class="task">Какая буква должна быть на самом деле?</p>' +
     '<div class="word-fix" id="wf">' + shown + '</div>' +
+    (rule ? '<div class="rule-line"><span class="spk" id="sayRule">🔊</span>' +
+            '<span>' + mark(rule) + '</span></div>' : '') +
     '<div class="letters" id="letters"></div>';
+
+  if(rule) $("#sayRule").addEventListener("click", () => speak(plain(rule)));
 
   const box = $("#letters");
   shuffle([w.ok, w.bad]).forEach(ltr => {
@@ -712,14 +752,28 @@ function finishRound(){
              : "И сразу, без единой ошибки!";
   talk("Ай! " + line, "Ай! " + line, "sad");
 
+  // верное слово должно повисеть перед глазами: ради зрительного образа
+  // всё и затевалось. Произносим его и держим, пока она не нажмёт «Дальше».
+  const w = r.imposter;
+  const correct = Array.from(w.t)
+    .map((c,k) => k === w.i ? '<span class="fixed">' + c + '</span>' : c).join("");
+  const rule = applyRule(w, true);
+  setTimeout(() => autoSpeak(w.t), 700);
+
   setTimeout(() => {
     screen.innerHTML =
       '<div class="gain">+' + got + ' ⭐</div>' +
+      '<p class="task center">Запомни, как пишется:</p>' +
+      '<div class="word-fix">' + correct + '</div>' +
+      (rule ? '<div class="rule-line center-line"><span class="spk" id="sayRule2">🔊</span>' +
+              '<span>' + mark(rule) + '</span></div>' : '') +
       '<p class="task center">' + (hp > 0
         ? "У Кляксы осталось " + hp + "% сил."
         : "Клякса разоблачена!") + '</p>' +
       '<button class="btn big" id="next">' +
         (hp > 0 && roundNo < ROUNDS ? "Дальше" : "Итоги") + '</button>';
+    const sr = $("#sayRule2");
+    if(sr) sr.addEventListener("click", () => speak(plain(rule)));
     $("#next").addEventListener("click", nextRound);
   }, 900);
 }
