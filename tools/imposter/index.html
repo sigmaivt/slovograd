@@ -305,6 +305,7 @@
     </details>
 
     <div id="lessonMsg" class="task" style="margin:10px 0 0"></div>
+    <div class="task" style="margin:10px 0 0;font-size:12px;opacity:.6">Версия игры: <span id="ver"></span></div>
     <button class="btn ghost" id="lessonReset">Вернуть урок по умолчанию</button>
   </div>
 
@@ -455,10 +456,11 @@ function applyRule(w, full){
   if(w.type === "SUFFIX_IK_EK") return "Скажи: нет " + genitive(w);
   if(w.type === "SUFFIX_CUB" || w.type === "SUFFIX_DIM")
     return "Перед суффиксом буква «" + before + "»";
-  // границу суффикса по одной букве не определить, а назвать её неверно
-  // («учитель» → «-ель» вместо «-тель») хуже, чем промолчать
-  if(w.type === "SUFFIX_CONST") return "";
-  return "";
+  // Для словарных и постоянных суффиксов проверять нечего: своего разбора
+  // у слова нет. Тогда показываем само правило — это лучше пустоты.
+  // Границу суффикса по одной букве не угадываем: «учитель» → «-ель»
+  // вместо «-тель» было бы неверным разбором.
+  return PROOF[w.type] ? PROOF[w.type].text : "";
 }
 
 function genitive(w){
@@ -523,7 +525,9 @@ function face(mood){
 }
 let lastLine = "";
 function talk(html, voiceText, mood){
-  say.innerHTML = html;
+  // текст одним куском: пузырь — флекс-контейнер, и <b> внутри стал бы
+  // отдельным элементом, разрывая фразу посреди слова
+  say.innerHTML = "<span>" + html + "</span>";
   face(mood || "");
   lastLine = voiceText || say.textContent;
   if(voiceText !== null) autoSpeak(lastLine);
@@ -929,6 +933,11 @@ setPrint(savedPrint);
 $("#fontToggle").addEventListener("click", () => setPrint(!document.body.classList.contains("print")));
 
 // --- панель урока ---------------------------------------------------
+// Метка версии: по ней видно, обновилась ли страница на телефоне
+// или браузер показывает старую из кэша.
+const VERSION = "25 сентября, 12:40";
+$("#ver").textContent = VERSION;
+
 const DEFAULT_WORDS = LESSON.words.slice(), DEFAULT_TITLE = LESSON.title;
 const panel = $("#lessonPanel"), lmsg = $("#lessonMsg");
 
