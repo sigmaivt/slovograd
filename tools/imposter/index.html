@@ -935,7 +935,7 @@ $("#fontToggle").addEventListener("click", () => setPrint(!document.body.classLi
 // --- панель урока ---------------------------------------------------
 // Метка версии: по ней видно, обновилась ли страница на телефоне
 // или браузер показывает старую из кэша.
-const VERSION = "25 сентября, 12:40";
+const VERSION = "25 сентября, 13:10";
 $("#ver").textContent = VERSION;
 
 const DEFAULT_WORDS = LESSON.words.slice(), DEFAULT_TITLE = LESSON.title;
@@ -1013,6 +1013,7 @@ function startScreen(){
     '<p class="task">Клякса пробралась в слова урока и портит буквы. ' +
     'Найди самозванца, докажи его вину и почини слово.</p>' +
     '<p class="task">Урок: «' + LESSON.title + '», слов: ' + LESSON.words.length + '</p>' +
+    '<p class="task" style="opacity:.75">Версия игры: ' + VERSION + '</p>' +
     '<button class="btn big" id="start">Играть</button>';
   $("#start").addEventListener("click", () => {
     autoSpeak("Начинаем!");
