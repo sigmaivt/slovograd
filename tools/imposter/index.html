@@ -63,8 +63,14 @@
   @keyframes squish{0%{transform:scale(1,1)}35%{transform:scale(1.12,.86)}70%{transform:scale(.95,1.06)}100%{transform:scale(1,1)}}
   @media (prefers-reduced-motion:reduce){ .kl-bob,.kl-eyes,#kl.hit .kl-bob{animation:none} }
 
-  .voice-toggle{flex:none;min-width:48px;height:36px;border-radius:10px;background:var(--panel2);
-    border:2px solid var(--line);color:var(--ink);font-size:17px;cursor:pointer;padding:0 8px}
+  .voice-toggle{flex:none;min-width:44px;height:36px;border-radius:10px;background:var(--panel2);
+    border:2px solid var(--line);color:var(--ink);font-size:17px;cursor:pointer;padding:0 6px}
+
+  #lessonPanel{background:var(--panel);border:2px solid var(--line);border-radius:14px;
+    padding:12px;margin-bottom:14px}
+  #lessonPanel textarea{width:100%;background:var(--panel2);color:var(--ink);border:2px solid var(--line);
+    border-radius:10px;padding:10px;font:13px/1.4 ui-monospace,Consolas,monospace;resize:vertical}
+  #lessonPanel .ok{color:var(--ok)} #lessonPanel .err{color:var(--bad)}
 
   h1{font-size:21px;margin:0 0 6px}
   .task{font-size:15px;color:var(--dim);margin:0 0 14px}
@@ -191,6 +197,7 @@
     <div class="stars" id="stars">⭐ 0</div>
     <div class="hp"><i id="hp"></i></div>
     <div class="round" id="round"></div>
+    <button class="voice-toggle" id="lessonBtn" title="Загрузить новый урок">📄</button>
     <button class="voice-toggle" id="voiceToggle" title="Клякса говорит вслух или молчит">🗣️</button>
     <button class="font-toggle" id="fontToggle" title="Шрифт: тетрадь или печатный">Аа</button>
   </div>
@@ -273,6 +280,15 @@
     <button class="bubble" id="say" title="Послушать Кляксу ещё раз">…</button>
   </div>
 
+  <!-- панель загрузки урока: для родителя, ребёнку не нужна -->
+  <div id="lessonPanel" class="card-dark" hidden>
+    <p class="task" style="margin:0 0 8px">Вставь сюда <b>lesson.json</b> от генератора — игра пойдёт на новых словах.</p>
+    <textarea id="lessonJson" rows="5" placeholder='{"schemaVersion": 1, ...}'></textarea>
+    <div id="lessonMsg" class="task" style="margin:8px 0 0"></div>
+    <button class="btn big" id="lessonLoad" style="margin-top:10px">Загрузить урок</button>
+    <button class="btn ghost" id="lessonReset">Вернуть урок по умолчанию</button>
+  </div>
+
   <div id="screen"></div>
 </div>
 
@@ -332,7 +348,58 @@ const PROOF = {
   SUFFIX_DIM   : {text:"Это ласковое слово. Перед суффиксом твёрдый звук — пиши {о}, мягкий — {е}.",
                   ex:"лис{о}нька, доч{е}нька"},
   SUFFIX_CONST : {text:"Этот суффикс всегда пишется одинаково. Его надо просто запомнить.",
-                  ex:"рад{о}сть, писат{е}ль, лесн{и}к"}
+                  ex:"рад{о}сть, писат{е}ль, лесн{и}к"},
+
+  // Остальные орфограммы каталога — чтобы игра работала на любом уроке,
+  // а не только на суффиксах. Те же правила лягут в карточки приложения (A3).
+  ROOT_VOWEL_CHECK: {text:"Измени слово так, чтобы на эту букву упало ударение. Что слышишь, то и пиши.",
+                  ex:"з{и}ма — з{и}мы, м{о}ря — м{о}ре"},
+  ROOT_DICT     : {text:"Это словарное слово. Проверить нечем — надо запомнить.",
+                  ex:"в{о}кзал, б{а}гаж, к{о}рабль"},
+  ROOT_PAIRED_CONS:{text:"Поставь после этой буквы гласную. Тогда её станет слышно.",
+                  ex:"ду{б} — ду{б}ы, сказ{к}а — сказ{о}чка"},
+  ROOT_SILENT_CONS:{text:"Подбери слово, где эта буква слышится. Если не слышится — не пиши.",
+                  ex:"звёз{д}ный — звез{д}а, чудесный — чудеса"},
+  DOUBLE_CONS   : {text:"Здесь две одинаковые буквы подряд. Это надо запомнить.",
+                  ex:"кла{сс}, ал{лл}ея, су{бб}ота"},
+  HUSHING       : {text:"После шипящих пиши и, а, у. А в чк, чн, нч, щн мягкий знак не нужен.",
+                  ex:"ж{и}знь, ч{а}ща, то{чк}а"},
+  SEP_SIGNS     : {text:"После приставки пиши твёрдый знак, внутри слова — мягкий.",
+                  ex:"под{ъ}езд, вь{ю}га"},
+  SOFT_SIGN_MARK: {text:"Мягкий знак показывает, что буква перед ним звучит мягко.",
+                  ex:"олен{ь}, письмо"},
+  SOFT_SIGN_NOUN: {text:"Определи род. У женского рода мягкий знак пиши, у мужского — нет.",
+                  ex:"ноч{ь}, рож{ь}, но: нет туч"},
+  PREFIX_SPELL  : {text:"Приставка всегда пишется одинаково, как её ни произноси.",
+                  ex:"{с}делать, {под}пись"},
+  COMPOUND_VOWEL: {text:"Слово из двух корней. Между ними пиши о или е.",
+                  ex:"сам{о}лёт, овощ{е}вод"},
+  CAPITAL_PROPER: {text:"Это имя, фамилия, кличка или название. Пиши с большой буквы.",
+                  ex:"Москва, Волга, Пушкин"},
+  NOUN_ENDING   : {text:"Определи склонение и падеж, подставь слово-помощник с ударным окончанием.",
+                  ex:"о Родин{е}, в жизн{и}"},
+  ADJ_GENDER    : {text:"Задай вопрос от существительного и посмотри на род.",
+                  ex:"больш{ой} дом, больш{ая} река"},
+  ADJ_ENDING    : {text:"Задай вопрос от существительного. Как в вопросе, так и в окончании.",
+                  ex:"могуч{им} дубом, дальн{его} поля"},
+  VERB_ENDING   : {text:"Поставь глагол в неопределённую форму и узнай спряжение.",
+                  ex:"кле{ит} — клеить, се{ет} — сеять"},
+  VERB_SOFT_SIGN: {text:"Задай вопрос. Если в вопросе есть мягкий знак — пиши и в слове.",
+                  ex:"береч{ь}, учиш{ь}"},
+  TSYA          : {text:"Задай вопрос. «Что делать?» — с мягким знаком, «что делает?» — без.",
+                  ex:"учи{ть}ся, учи{т}ся"},
+  NE_VERB       : {text:"Не с глаголами пишется отдельно.",
+                  ex:"не был, не говорил"},
+  PAST_SUFFIX   : {text:"Поставь глагол в неопределённую форму — там и увидишь букву.",
+                  ex:"вид{е}л — видеть, слыш{а}л — слышать"},
+  PREFIX_PREP   : {text:"Попробуй вставить слово между. Влезло — это предлог, пиши отдельно.",
+                  ex:"над рекой, у тебя"},
+  PRON_PREP     : {text:"Предлог с местоимением пишется отдельно.",
+                  ex:"у тебя, обо мне"},
+  ADVERB_O_A    : {text:"Это наречие. Такие слова запоминают по образцу.",
+                  ex:"слев{а}, направ{о}"},
+  SUFFIX_O_E_HUSH:{text:"Поставь ударение. Падает на суффикс — пиши о, не падает — е.",
+                  ex:"крюч{о}к, ореш{е}к"}
 };
 
 // {буква} → подсветка на экране; для озвучки — без скобок.
@@ -427,11 +494,43 @@ function corrupt(w){
   const ch = Array.from(w.t); ch[w.i] = w.bad; return ch.join("");
 }
 
+// --- загрузка урока из lesson.json ---------------------------------
+// Слова кончаются быстро, и играть становится не во что. Поэтому урок
+// не зашит в игру: можно вставить любой lesson.json от генератора.
+let used = new Set();            // кого уже ловили в этом заходе
+
+function convertLesson(data){
+  if(!data || data.schemaVersion !== 1 || !Array.isArray(data.words))
+    throw new Error("Это не похоже на lesson.json: нет schemaVersion или words.");
+  const words = [], skipped = [];
+  for(const w of data.words){
+    const o = (w.orthograms || []).find(x => x.length === 1 && PROOF[x.type]);
+    if(!o){ skipped.push(w.text); continue; }
+    const bad = (o.distractors || []).find(d => d.length === 1 && d !== o.correct);
+    if(!bad){ skipped.push(w.text); continue; }
+    words.push({t:w.text, em:w.emoji || "📘", i:o.index, ok:o.correct,
+                bad, type:o.type, ctx:w.context || w.text});
+  }
+  if(words.length < 5)
+    throw new Error("Годных слов " + words.length + ", а нужно хотя бы 5.");
+  return {title:data.title || "Урок", words, skipped};
+}
+
+function applyLesson(res){
+  LESSON.title = res.title; LESSON.words = res.words;
+  used = new Set(); stars = 0; roundNo = 0; hp = 100;
+  $("#stars").textContent = "⭐ 0"; $("#hp").style.width = "100%"; $("#round").textContent = "";
+}
+
 function buildRound(){
-  const pool = shuffle(LESSON.words);
+  // не повторяем самозванца, пока не кончатся слова
+  let pool = shuffle(LESSON.words.filter(w => !used.has(w.t)));
+  if(!pool.length){ used = new Set(); pool = shuffle(LESSON.words); }
   const imposter = pool[0];
+  used.add(imposter.t);
   // остальные четверо — из других слов, по возможности другого типа
-  const others = pool.slice(1, 5);
+  // соседи — из всего урока, даже если пул уже подчищен
+  const others = shuffle(LESSON.words.filter(w => w !== imposter)).slice(0, 4);
   const cards = shuffle([{w:imposter, guilty:true}, ...others.map(w=>({w, guilty:false}))]);
 
   // улики: верная + две чужие
@@ -760,21 +859,65 @@ try{ savedPrint = localStorage.getItem("slovograd.print") === "1"; }catch(e){}
 setPrint(savedPrint);
 $("#fontToggle").addEventListener("click", () => setPrint(!document.body.classList.contains("print")));
 
+// --- панель урока ---------------------------------------------------
+const DEFAULT_WORDS = LESSON.words.slice(), DEFAULT_TITLE = LESSON.title;
+const panel = $("#lessonPanel"), lmsg = $("#lessonMsg");
+
+function showLessonMsg(text, cls){ lmsg.textContent = text; lmsg.className = "task " + (cls || ""); }
+
+$("#lessonBtn").addEventListener("click", () => {
+  panel.hidden = !panel.hidden;
+  if(!panel.hidden) showLessonMsg("Сейчас в игре: «" + LESSON.title + "», слов: " + LESSON.words.length);
+});
+
+$("#lessonLoad").addEventListener("click", () => {
+  try{
+    let data;
+    try{ data = JSON.parse($("#lessonJson").value); }
+    catch(e){ throw new Error("текст не читается как JSON. Скопируй урок целиком, от { до }."); }
+    const res = convertLesson(data);
+    applyLesson(res);
+    try{ localStorage.setItem("slovograd.lesson", $("#lessonJson").value); }catch(e){}
+    showLessonMsg("Готово: «" + res.title + "», слов " + res.words.length +
+      (res.skipped.length ? ". Пропущены (нет подходящей орфограммы): " + res.skipped.join(", ") : ""), "ok");
+    panel.hidden = true;
+    startScreen();
+  }catch(e){ showLessonMsg("Не вышло: " + e.message, "err"); }
+});
+
+$("#lessonReset").addEventListener("click", () => {
+  applyLesson({title:DEFAULT_TITLE, words:DEFAULT_WORDS, skipped:[]});
+  try{ localStorage.removeItem("slovograd.lesson"); }catch(e){}
+  showLessonMsg("Вернулся урок по умолчанию: " + DEFAULT_WORDS.length + " слов", "ok");
+  panel.hidden = true;
+  startScreen();
+});
+
+// урок, загруженный в прошлый раз
+try{
+  const saved = localStorage.getItem("slovograd.lesson");
+  if(saved){ applyLesson(convertLesson(JSON.parse(saved))); $("#lessonJson").value = saved; }
+}catch(e){/* битый урок в памяти — играем на том, что зашит */}
+
 setQuiet(quiet);
 $("#voiceToggle").addEventListener("click", () => setQuiet(!quiet));
 // пузырь: повторить реплику Кляксы — работает и когда она «молчит»
 say.addEventListener("click", () => { if(lastLine) speak(lastLine); });
 
 // ============ старт ===============================================
-screen.innerHTML =
-  '<h1>Словоград</h1>' +
-  '<p class="task">Клякса пробралась в слова урока и портит буквы. ' +
-  'Найди самозванца, докажи его вину и почини слово.</p>' +
-  '<button class="btn big" id="start">Играть</button>';
-$("#start").addEventListener("click", () => {
-  autoSpeak("Начинаем!");
-  nextRound();
-});
+function startScreen(){
+  screen.innerHTML =
+    '<h1>Словоград</h1>' +
+    '<p class="task">Клякса пробралась в слова урока и портит буквы. ' +
+    'Найди самозванца, докажи его вину и почини слово.</p>' +
+    '<p class="task">Урок: «' + LESSON.title + '», слов: ' + LESSON.words.length + '</p>' +
+    '<button class="btn big" id="start">Играть</button>';
+  $("#start").addEventListener("click", () => {
+    autoSpeak("Начинаем!");
+    nextRound();
+  });
+}
+startScreen();
 talk("Привет, " + NAME + "! Я Клякса. Спорим, ты меня не найдёшь?", null, "smug");
 </script>
 </body>
