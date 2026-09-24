@@ -40,6 +40,11 @@
   .round{font-size:13px;color:var(--dim);white-space:nowrap}
 
   /* ---- Клякса ---- */
+  .setline{display:flex;align-items:center;gap:7px;margin:-4px 0 12px;
+    font-size:13px;color:var(--dim)}
+  .setline::before{content:"📄";font-size:13px}
+  .setline b{color:var(--ink);font-weight:700}
+
   .kl{display:flex;gap:8px;align-items:center;margin-bottom:14px}
   .kl svg{flex:none;width:88px;height:88px;overflow:visible}
   /* пузырь — кнопка: нажала, и Клякса повторяет реплику вслух */
@@ -306,6 +311,9 @@
     </svg>
     <button class="bubble" id="say" title="Послушать Кляксу ещё раз">…</button>
   </div>
+
+  <!-- какой набор сейчас тренируем: видно на всех экранах игры -->
+  <div id="setline" class="setline"></div>
 
   <!-- панель загрузки урока: для родителя, ребёнку не нужна -->
   <div id="lessonPanel" class="card-dark" hidden>
@@ -696,7 +704,14 @@ function modeName(){
   return "Все слова";
 }
 
+// строка «что тренируем» — обновляется при любой смене набора
+function renderSetLine(){
+  const el = $("#setline");
+  if(el) el.innerHTML = "Тренируем: <b>" + esc(modeName()) + "</b> · слов: " + activeWords().length;
+}
+
 function resetGame(){
+  renderSetLine();
   used = new Set(); stars = 0; roundNo = 0; hp = 100;
   $("#stars").textContent = "⭐ 0"; $("#hp").style.width = "100%"; $("#round").textContent = "";
 }
@@ -1071,7 +1086,7 @@ $("#fontToggle").addEventListener("click", () => setPrint(!document.body.classLi
 // --- панель урока ---------------------------------------------------
 // Метка версии: по ней видно, обновилась ли страница на телефоне
 // или браузер показывает старую из кэша.
-const VERSION = "25 сентября, 15:30";
+const VERSION = "25 сентября, 16:20";
 $("#ver").textContent = VERSION;
 
 const panel = $("#lessonPanel"), lmsg = $("#lessonMsg");
@@ -1192,6 +1207,7 @@ say.addEventListener("click", () => { if(lastLine) speak(lastLine); });
 
 // ============ старт ===============================================
 function startScreen(){
+  renderSetLine();
   screen.innerHTML =
     '<h1>Словоград</h1>' +
     '<p class="task">Клякса пробралась в слова урока и портит буквы. ' +
