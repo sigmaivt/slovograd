@@ -286,10 +286,17 @@
   <div id="lessonPanel" class="card-dark" hidden>
     <p class="task" style="margin:0 0 6px">Как зовут игрока — имя останется только на этом телефоне.</p>
     <input id="childName" type="text" placeholder="Имя" maxlength="20">
-    <p class="task" style="margin:12px 0 8px">Вставь сюда <b>lesson.json</b> от генератора — игра пойдёт на новых словах.</p>
-    <textarea id="lessonJson" rows="5" placeholder='{"schemaVersion": 1, ...}'></textarea>
-    <div id="lessonMsg" class="task" style="margin:8px 0 0"></div>
-    <button class="btn big" id="lessonLoad" style="margin-top:10px">Загрузить урок</button>
+    <p class="task" style="margin:12px 0 8px">Новый урок — файл <b>lesson.json</b> от генератора.</p>
+    <label class="btn big" for="lessonFile" style="margin-top:0">📂 Выбрать файл урока</label>
+    <input id="lessonFile" type="file" accept=".json,application/json" hidden>
+
+    <details style="margin-top:10px">
+      <summary class="task" style="cursor:pointer">Или вставить текстом</summary>
+      <textarea id="lessonJson" rows="5" placeholder='{"schemaVersion": 1, ...}' style="margin-top:8px"></textarea>
+      <button class="btn" id="lessonLoad" style="margin-top:8px">Загрузить из текста</button>
+    </details>
+
+    <div id="lessonMsg" class="task" style="margin:10px 0 0"></div>
     <button class="btn ghost" id="lessonReset">Вернуть урок по умолчанию</button>
   </div>
 
@@ -886,19 +893,35 @@ $("#childName").addEventListener("input", e => {
   try{ localStorage.setItem("slovograd.name", e.target.value.trim()); }catch(err){}
 });
 
-$("#lessonLoad").addEventListener("click", () => {
+function loadFromText(txt, where){
   try{
     let data;
-    try{ data = JSON.parse($("#lessonJson").value); }
-    catch(e){ throw new Error("текст не читается как JSON. Скопируй урок целиком, от { до }."); }
+    try{ data = JSON.parse(txt); }
+    catch(e){ throw new Error(where === "file"
+      ? "этот файл не похож на урок. Нужен lesson.json от генератора."
+      : "текст не читается как JSON. Скопируй урок целиком, от { до }."); }
     const res = convertLesson(data);
     applyLesson(res);
-    try{ localStorage.setItem("slovograd.lesson", $("#lessonJson").value); }catch(e){}
+    try{ localStorage.setItem("slovograd.lesson", txt); }catch(e){}
     showLessonMsg("Готово: «" + res.title + "», слов " + res.words.length +
       (res.skipped.length ? ". Пропущены (нет подходящей орфограммы): " + res.skipped.join(", ") : ""), "ok");
     panel.hidden = true;
     startScreen();
   }catch(e){ showLessonMsg("Не вышло: " + e.message, "err"); }
+}
+
+$("#lessonLoad").addEventListener("click", () => loadFromText($("#lessonJson").value, "text"));
+
+// файл с телефона: так удобнее, чем вставлять длинный текст
+$("#lessonFile").addEventListener("change", e => {
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  showLessonMsg("Читаю «" + f.name + "»…");
+  const r = new FileReader();
+  r.onload = () => loadFromText(String(r.result), "file");
+  r.onerror = () => showLessonMsg("Не вышло прочитать файл. Попробуй вставить текстом.", "err");
+  r.readAsText(f, "utf-8");
+  e.target.value = "";           // чтобы тот же файл можно было выбрать снова
 });
 
 $("#lessonReset").addEventListener("click", () => {
