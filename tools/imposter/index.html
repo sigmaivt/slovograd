@@ -68,8 +68,10 @@
 
   #lessonPanel{background:var(--panel);border:2px solid var(--line);border-radius:14px;
     padding:12px;margin-bottom:14px}
-  #lessonPanel textarea{width:100%;background:var(--panel2);color:var(--ink);border:2px solid var(--line);
-    border-radius:10px;padding:10px;font:13px/1.4 ui-monospace,Consolas,monospace;resize:vertical}
+  #lessonPanel textarea,#lessonPanel input{width:100%;background:var(--panel2);color:var(--ink);
+    border:2px solid var(--line);border-radius:10px;padding:10px;resize:vertical}
+  #lessonPanel textarea{font:13px/1.4 ui-monospace,Consolas,monospace}
+  #lessonPanel input{font:inherit;font-size:16px;min-height:48px}
   #lessonPanel .ok{color:var(--ok)} #lessonPanel .err{color:var(--bad)}
 
   h1{font-size:21px;margin:0 0 6px}
@@ -282,7 +284,9 @@
 
   <!-- панель загрузки урока: для родителя, ребёнку не нужна -->
   <div id="lessonPanel" class="card-dark" hidden>
-    <p class="task" style="margin:0 0 8px">Вставь сюда <b>lesson.json</b> от генератора — игра пойдёт на новых словах.</p>
+    <p class="task" style="margin:0 0 6px">Как зовут игрока — имя останется только на этом телефоне.</p>
+    <input id="childName" type="text" placeholder="Имя" maxlength="20">
+    <p class="task" style="margin:12px 0 8px">Вставь сюда <b>lesson.json</b> от генератора — игра пойдёт на новых словах.</p>
     <textarea id="lessonJson" rows="5" placeholder='{"schemaVersion": 1, ...}'></textarea>
     <div id="lessonMsg" class="task" style="margin:8px 0 0"></div>
     <button class="btn big" id="lessonLoad" style="margin-top:10px">Загрузить урок</button>
@@ -816,7 +820,11 @@ function balloons(){
 }
 
 // ============ финал ================================================
-const NAME = "Любава";   // потом придёт из профиля ребёнка
+// Имя ребёнка в коде не хранится: репозиторий публичный. Оно задаётся
+// на самом телефоне и остаётся там же (в приложении придёт из профиля).
+function childName(){
+  try{ return (localStorage.getItem("slovograd.name") || "").trim(); }catch(e){ return ""; }
+}
 
 function screenEnd(){
   $("#round").textContent = "";
@@ -825,7 +833,7 @@ function screenEnd(){
     '<div class="scroll">' +
       '<div class="rod"></div>' +
       '<div class="parch"><div class="in">' +
-        '<div class="who">' + NAME + ',</div>' +
+        (childName() ? '<div class="who">' + esc(childName()) + ',</div>' : '') +
         '<div class="hooray">ты молодчина!</div>' +
         '<div class="seal">⭐</div>' +
       '</div></div>' +
@@ -867,7 +875,15 @@ function showLessonMsg(text, cls){ lmsg.textContent = text; lmsg.className = "ta
 
 $("#lessonBtn").addEventListener("click", () => {
   panel.hidden = !panel.hidden;
-  if(!panel.hidden) showLessonMsg("Сейчас в игре: «" + LESSON.title + "», слов: " + LESSON.words.length);
+  if(!panel.hidden){
+    $("#childName").value = childName();
+    showLessonMsg("Сейчас в игре: «" + LESSON.title + "», слов: " + LESSON.words.length);
+  }
+});
+
+// имя игрока хранится только на устройстве
+$("#childName").addEventListener("input", e => {
+  try{ localStorage.setItem("slovograd.name", e.target.value.trim()); }catch(err){}
 });
 
 $("#lessonLoad").addEventListener("click", () => {
@@ -918,7 +934,7 @@ function startScreen(){
   });
 }
 startScreen();
-talk("Привет, " + NAME + "! Я Клякса. Спорим, ты меня не найдёшь?", null, "smug");
+talk("Привет" + (childName() ? ", " + esc(childName()) : "") + "! Я Клякса. Спорим, ты меня не найдёшь?", null, "smug");
 </script>
 </body>
 </html>
