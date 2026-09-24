@@ -162,6 +162,8 @@
   body.print .rule-line{font-size:16px;line-height:22px}
   .rule-line .spk{background:#efeadb;border-color:#d9d4c2}
   .rule-line.center-line{justify-content:center;text-align:center}
+  .rule-txt{display:flex;flex-direction:column;gap:2px}
+  .rule-txt .gen{font-size:.86em;color:var(--pen-dim)}
 
   /* праздник в конце: салют на холсте + взлетающие шарики */
   #fx{position:fixed;inset:0;pointer-events:none;z-index:4}
@@ -444,23 +446,55 @@ const HINT = {
 // full=false — только способ проверки, до выбора буквы. Последние шаги
 // алгоритма в уроке обычно называют ответ («значит, пиши и»), и показывать
 // их раньше времени нельзя: выбирать станет нечего.
-function applyRule(w, full){
+// Возвращает две части: наблюдение по этому слову и само правило.
+// Одного наблюдения мало — «перед суффиксом буква н» не говорит, что
+// выбрать. Одного правила тоже мало — его надо приложить к слову.
+// Поэтому показываем обе строки, а вывод ребёнок делает сам.
+function ruleFor(w, full){
   const m = w.m;
+  const ok = w.ok;
+  // шаг, который называет ответ, до выбора буквы не показываем
+  // Выбрасываем только прямое называние ответа. Само слово в шаге —
+  // не утечка: «нет мячика» и есть проверка, ради неё всё и делается.
+  const reveals = s => /^\s*значит/i.test(s)
+        || new RegExp("пиши\\s+-?" + ok, "i").test(s);
+
+  let own = "";
   if(m){
-    if(m.kind === "check_word") return "Проверочное слово: " + m.checkWord;
-    if(m.kind === "mnemonic")   return m.mnemonic;
-    if(m.kind === "algorithm" && m.steps && m.steps.length)
-      return full ? m.steps.join(". ") : m.steps[0];
+    if(m.kind === "check_word") own = "Проверочное слово: " + m.checkWord;
+    else if(m.kind === "mnemonic") own = m.mnemonic;
+    else if(m.kind === "algorithm" && m.steps && m.steps.length){
+      const steps = full ? m.steps : m.steps.filter(s => !reveals(s));
+      own = steps.join(". ");
+    }
   }
-  const before = Array.from(w.t)[w.i - 1] || "";
-  if(w.type === "SUFFIX_IK_EK") return "Скажи: нет " + genitive(w);
-  if(w.type === "SUFFIX_CUB" || w.type === "SUFFIX_DIM")
-    return "Перед суффиксом буква «" + before + "»";
-  // Для словарных и постоянных суффиксов проверять нечего: своего разбора
-  // у слова нет. Тогда показываем само правило — это лучше пустоты.
-  // Границу суффикса по одной букве не угадываем: «учитель» → «-ель»
-  // вместо «-тель» было бы неверным разбором.
-  return PROOF[w.type] ? PROOF[w.type].text : "";
+  if(!own){
+    const before = Array.from(w.t)[w.i - 1] || "";
+    if(w.type === "SUFFIX_IK_EK") own = "Скажи: нет " + genitive(w);
+    else if(w.type === "SUFFIX_CUB" || w.type === "SUFFIX_DIM")
+      own = "Перед суффиксом буква «" + before + "»";
+    // границу суффикса по одной букве не угадываем: «учитель» → «-ель»
+    // вместо «-тель» было бы неверным разбором
+  }
+  return {own, rule: PROOF[w.type] ? PROOF[w.type].text : ""};
+}
+
+// одна строка для озвучки
+function ruleText(w, full){
+  const r = ruleFor(w, full);
+  return [r.own, r.rule].filter(Boolean).join(". ");
+}
+
+// разметка блока с правилом
+function ruleBlock(w, full, id, center){
+  const r = ruleFor(w, full);
+  if(!r.own && !r.rule) return "";
+  return '<div class="rule-line' + (center ? " center-line" : "") + '">' +
+    '<span class="spk" id="' + id + '">🔊</span>' +
+    '<span class="rule-txt">' +
+      (r.own  ? '<span class="own">'  + mark(r.own)  + '</span>' : "") +
+      (r.rule ? '<span class="gen">'  + mark(r.rule) + '</span>' : "") +
+    '</span></div>';
 }
 
 function genitive(w){
@@ -707,18 +741,15 @@ function screenFix(){
   const shown = ch.map((c,k) => k === w.i
       ? '<span class="lit" id="slot">' + w.bad + '</span>' : c).join("");
 
-  // правило, применённое к этому слову: «Скажи: нет овражка»
-  const rule = applyRule(w, false);
-
   screen.innerHTML =
     '<h1>Почини слово</h1>' +
     '<p class="task">Какая буква должна быть на самом деле?</p>' +
     '<div class="word-fix" id="wf">' + shown + '</div>' +
-    (rule ? '<div class="rule-line"><span class="spk" id="sayRule">🔊</span>' +
-            '<span>' + mark(rule) + '</span></div>' : '') +
+    ruleBlock(w, false, "sayRule") +
     '<div class="letters" id="letters"></div>';
 
-  if(rule) $("#sayRule").addEventListener("click", () => speak(plain(rule)));
+  const sr = $("#sayRule");
+  if(sr) sr.addEventListener("click", () => speak(plain(ruleText(w, false))));
 
   const box = $("#letters");
   shuffle([w.ok, w.bad]).forEach(ltr => {
@@ -761,7 +792,6 @@ function finishRound(){
   const w = r.imposter;
   const correct = Array.from(w.t)
     .map((c,k) => k === w.i ? '<span class="fixed">' + c + '</span>' : c).join("");
-  const rule = applyRule(w, true);
   setTimeout(() => autoSpeak(w.t), 700);
 
   setTimeout(() => {
@@ -769,15 +799,14 @@ function finishRound(){
       '<div class="gain">+' + got + ' ⭐</div>' +
       '<p class="task center">Запомни, как пишется:</p>' +
       '<div class="word-fix">' + correct + '</div>' +
-      (rule ? '<div class="rule-line center-line"><span class="spk" id="sayRule2">🔊</span>' +
-              '<span>' + mark(rule) + '</span></div>' : '') +
+      ruleBlock(w, true, "sayRule2", true) +
       '<p class="task center">' + (hp > 0
         ? "У Кляксы осталось " + hp + "% сил."
         : "Клякса разоблачена!") + '</p>' +
       '<button class="btn big" id="next">' +
         (hp > 0 && roundNo < ROUNDS ? "Дальше" : "Итоги") + '</button>';
     const sr = $("#sayRule2");
-    if(sr) sr.addEventListener("click", () => speak(plain(rule)));
+    if(sr) sr.addEventListener("click", () => speak(plain(ruleText(w, true))));
     $("#next").addEventListener("click", nextRound);
   }, 900);
 }
@@ -935,7 +964,7 @@ $("#fontToggle").addEventListener("click", () => setPrint(!document.body.classLi
 // --- панель урока ---------------------------------------------------
 // Метка версии: по ней видно, обновилась ли страница на телефоне
 // или браузер показывает старую из кэша.
-const VERSION = "25 сентября, 13:10";
+const VERSION = "25 сентября, 14:05";
 $("#ver").textContent = VERSION;
 
 const DEFAULT_WORDS = LESSON.words.slice(), DEFAULT_TITLE = LESSON.title;
