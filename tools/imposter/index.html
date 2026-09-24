@@ -315,31 +315,16 @@
   <!-- какой набор сейчас тренируем: видно на всех экранах игры -->
   <div id="setline" class="setline"></div>
 
-  <!-- панель загрузки урока: для родителя, ребёнку не нужна -->
+  <!-- В игре остаётся только выбор набора. Уроки и слова — в кабинете:
+       ребёнку они не нужны и только мешают. -->
   <div id="lessonPanel" class="card-dark" hidden>
-    <p class="task" style="margin:0 0 6px">Как зовут игрока — имя останется только на этом телефоне.</p>
-    <input id="childName" type="text" placeholder="Имя" maxlength="20">
-    <p class="task" style="margin:14px 0 6px">Что тренируем</p>
+    <p class="task" style="margin:0 0 6px">Что тренируем</p>
     <div id="modes"></div>
-
-    <details style="margin-top:10px">
-      <summary class="task" style="cursor:pointer">Слова в базе</summary>
-      <div id="words"></div>
-    </details>
-
-    <p class="task" style="margin:14px 0 8px">Добавить урок — файл <b>lesson.json</b> от генератора.</p>
-    <label class="btn big" for="lessonFile" style="margin-top:0">📂 Выбрать файл урока</label>
-    <input id="lessonFile" type="file" accept=".json,application/json" hidden>
-
-    <details style="margin-top:10px">
-      <summary class="task" style="cursor:pointer">Или вставить текстом</summary>
-      <textarea id="lessonJson" rows="5" placeholder='{"schemaVersion": 1, ...}' style="margin-top:8px"></textarea>
-      <button class="btn" id="lessonLoad" style="margin-top:8px">Загрузить из текста</button>
-    </details>
-
     <div id="lessonMsg" class="task" style="margin:10px 0 0"></div>
-    <div class="task" style="margin:10px 0 0;font-size:12px;opacity:.6">Версия игры: <span id="ver"></span></div>
-    <button class="btn ghost" id="lessonReset">Вернуть урок по умолчанию</button>
+    <div class="task" style="margin:10px 0 0;font-size:12px;opacity:.6">
+      Версия игры: <span id="ver"></span> ·
+      <a href="../parent/" style="color:var(--dim)">кабинет</a>
+    </div>
   </div>
 
   <div id="screen"></div>
@@ -1086,7 +1071,7 @@ $("#fontToggle").addEventListener("click", () => setPrint(!document.body.classLi
 // --- панель урока ---------------------------------------------------
 // Метка версии: по ней видно, обновилась ли страница на телефоне
 // или браузер показывает старую из кэша.
-const VERSION = "25 сентября, 16:20";
+const VERSION = "25 сентября, 17:40";
 $("#ver").textContent = VERSION;
 
 const panel = $("#lessonPanel"), lmsg = $("#lessonMsg");
@@ -1102,9 +1087,9 @@ if(!POOL.length){
 
 function setMode(m){ MODE = m; used = new Set(); savePool(); renderPanel(); resetGame(); startScreen(); }
 
-// Панель родителя: выбор набора, список уроков и список слов
+// В игре — только выбор набора. Всё остальное (уроки, база слов,
+// имя игрока) живёт в кабинете: ../parent/
 function renderPanel(){
-  const set = activeWords();
   const modes = [{kind:"all"}, {kind:"hard"}].concat(LESSONS.map(l => ({kind:"lesson", id:l.id})));
   $("#modes").innerHTML = modes.map((m, k) => {
     const n = m.kind === "hard" ? POOL.filter(isHard).length
@@ -1120,84 +1105,14 @@ function renderPanel(){
   [...document.querySelectorAll("#modes .mode")].forEach(b =>
     b.addEventListener("click", () => setMode(modes[+b.dataset.k])));
 
-  $("#words").innerHTML = POOL.map((w, k) => {
-    const s = w.st || {ok:0, err:0};
-    const inSet = set.includes(w);
-    return '<div class="wrow' + (inSet ? "" : " dim") + '">' +
-      '<span class="wt">' + esc(w.t) + '</span>' +
-      '<span class="ws">✓' + s.ok + ' ✗' + s.err + '</span>' +
-      '<button class="wb" data-hard="' + k + '" title="Трудное слово">' + (isHard(w) ? "🔴" : "⚪") + '</button>' +
-      '<button class="wb" data-del="' + k + '" title="Убрать из базы">✕</button>' +
-      '</div>';
-  }).join("");
-  [...document.querySelectorAll("#words [data-hard]")].forEach(b =>
-    b.addEventListener("click", () => {
-      const w = POOL[+b.dataset.hard];
-      w.hard = isHard(w) ? false : true;     // вручную: включить или выключить
-      savePool(); renderPanel();
-    }));
-  [...document.querySelectorAll("#words [data-del]")].forEach(b =>
-    b.addEventListener("click", () => {
-      POOL.splice(+b.dataset.del, 1); savePool(); renderPanel(); startScreen();
-    }));
 }
 
 $("#lessonBtn").addEventListener("click", () => {
   panel.hidden = !panel.hidden;
   if(!panel.hidden){
-    $("#childName").value = childName();
     renderPanel();
     showLessonMsg("Сейчас тренируем: «" + modeName() + "», слов: " + activeWords().length);
   }
-});
-
-// имя игрока хранится только на устройстве
-$("#childName").addEventListener("input", e => {
-  try{ localStorage.setItem("slovograd.name", e.target.value.trim()); }catch(err){}
-});
-
-function loadFromText(txt, where){
-  try{
-    let data;
-    try{ data = JSON.parse(txt); }
-    catch(e){ throw new Error(where === "file"
-      ? "этот файл не похож на урок. Нужен lesson.json от генератора."
-      : "текст не читается как JSON. Скопируй урок целиком, от { до }."); }
-    const res = convertLesson(data);
-    const {added, merged} = mergeLesson(res);
-    resetGame(); renderPanel();
-    showLessonMsg("Добавлен урок «" + res.title + "»: новых слов " + added +
-      (merged ? ", уже было " + merged : "") +
-      (res.skipped.length ? ". Пропущены: " + res.skipped.join(", ") : "") +
-      ". Тренируем этот урок.", "ok");
-    panel.hidden = true;
-    startScreen();
-  }catch(e){ showLessonMsg("Не вышло: " + e.message, "err"); }
-}
-
-$("#lessonLoad").addEventListener("click", () => loadFromText($("#lessonJson").value, "text"));
-
-// файл с телефона: так удобнее, чем вставлять длинный текст
-$("#lessonFile").addEventListener("change", e => {
-  const f = e.target.files && e.target.files[0];
-  if(!f) return;
-  showLessonMsg("Читаю «" + f.name + "»…");
-  const r = new FileReader();
-  r.onload = () => loadFromText(String(r.result), "file");
-  r.onerror = () => showLessonMsg("Не вышло прочитать файл. Попробуй вставить текстом.", "err");
-  r.readAsText(f, "utf-8");
-  e.target.value = "";           // чтобы тот же файл можно было выбрать снова
-});
-
-// Очистка базы — действие родителя, и оно необратимо, поэтому с вопросом
-$("#lessonReset").addEventListener("click", () => {
-  if(!confirm("Удалить все слова и уроки из базы? Прогресс по ним пропадёт.")) return;
-  POOL = []; LESSONS = []; MODE = {kind:"all"};
-  mergeLesson({title:LESSON.title, words:LESSON.words, skipped:[]});
-  MODE = {kind:"all"}; savePool();
-  resetGame(); renderPanel();
-  showLessonMsg("База очищена, остался встроенный урок: " + POOL.length + " слов", "ok");
-  startScreen();
 });
 
 setQuiet(quiet);

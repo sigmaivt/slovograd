@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Словоград — кабинет</title>
+<style>
+  :root{--bg:#14161f;--panel:#1e2130;--panel2:#272b3d;--line:#3a3f57;
+        --ink:#f2efe6;--dim:#9aa0b8;--ok:#4ade80;--bad:#f87171;--accent:#fb923c}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;padding:14px 12px 48px;background:var(--bg);color:var(--ink);
+       font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+  .wrap{max-width:620px;margin:0 auto}
+  h1{font-size:21px;margin:0 0 4px}
+  h2{font-size:15px;margin:26px 0 10px;text-transform:uppercase;letter-spacing:.06em;color:var(--dim)}
+  p.hint{color:var(--dim);font-size:14px;margin:0 0 14px}
+  .card{background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:13px;margin-bottom:12px}
+  button,select,input,textarea{font:inherit}
+  .btn{display:block;width:100%;min-height:52px;margin-top:9px;border-radius:12px;
+       border:2px solid var(--line);background:var(--panel2);color:var(--ink);padding:12px;cursor:pointer}
+  .btn.big{background:var(--accent);border-color:var(--accent);color:#14161f;font-weight:800;text-align:center}
+  .btn.ghost{background:transparent;color:var(--dim);min-height:44px;font-size:14px;text-align:center}
+  input[type=text],select,textarea{width:100%;background:var(--panel2);color:var(--ink);
+       border:2px solid var(--line);border-radius:10px;padding:10px;min-height:48px}
+  textarea{min-height:110px;font:13px/1.4 ui-monospace,Consolas,monospace;resize:vertical}
+  label{display:block;font-size:13px;color:var(--dim);margin:10px 0 4px}
+  .row{display:flex;align-items:center;gap:8px;padding:8px 2px;border-bottom:1px solid var(--line)}
+  .row:last-child{border-bottom:0}
+  .row .t{flex:1;min-width:0}
+  .row .t b{display:block;font-size:16px;overflow:hidden;text-overflow:ellipsis}
+  .row .t span{font-size:12px;color:var(--dim)}
+  .row .s{font-size:13px;color:var(--dim);white-space:nowrap}
+  .ib{background:none;border:0;color:var(--ink);font-size:17px;cursor:pointer;min-width:40px;min-height:40px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+  .chip{background:var(--panel2);border:2px solid var(--line);border-radius:10px;color:var(--ink);
+        font-size:14px;padding:8px 10px;min-height:42px;cursor:pointer}
+  .chip.on{border-color:var(--accent);background:#2a2117}
+  .chip b{color:var(--dim);margin-left:4px} .chip.on b{color:var(--accent)}
+  .letters{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .lt{width:44px;height:52px;border-radius:10px;border:2px solid var(--line);background:var(--panel2);
+      color:var(--ink);font-size:22px;font-weight:700;cursor:pointer}
+  .lt.on{border-color:var(--accent);background:#2a2117;color:var(--accent)}
+  .msg{font-size:14px;margin-top:10px} .msg.ok{color:var(--ok)} .msg.err{color:var(--bad)}
+  .empty{color:var(--dim);font-size:14px;padding:10px 2px}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Кабинет</h1>
+  <p class="hint">Здесь ты готовишь материал, а дочка просто играет.
+    Игра и кабинет пользуются одной памятью этого телефона —
+    <a href="../imposter/">открыть игру</a>.</p>
+
+  <h2>Уроки</h2>
+  <div class="card">
+    <div id="lessons"></div>
+    <label for="file">Добавить урок — файл lesson.json от генератора</label>
+    <label class="btn big" for="file" style="margin-top:0">📂 Выбрать файл урока</label>
+    <input id="file" type="file" accept=".json,application/json" hidden>
+    <details style="margin-top:10px">
+      <summary class="hint" style="cursor:pointer;margin:0">Или вставить текстом</summary>
+      <textarea id="json" placeholder='{"schemaVersion": 1, ...}'></textarea>
+      <button class="btn" id="loadText">Загрузить из текста</button>
+    </details>
+    <div id="lessonMsg" class="msg"></div>
+  </div>
+
+  <h2>База слов</h2>
+  <div class="card">
+    <div class="chips" id="filters"></div>
+    <input type="text" id="search" placeholder="Поиск слова">
+    <div id="words" style="margin-top:6px"></div>
+    <div id="wordsMsg" class="msg"></div>
+  </div>
+
+  <h2>Добавить слово вручную</h2>
+  <div class="card">
+    <p class="hint" style="margin:0 0 8px">Для ошибок из школьной тетради — приложение о них не знает.</p>
+    <label for="nw">Слово целиком, как пишется правильно</label>
+    <input type="text" id="nw" placeholder="например, корова" autocomplete="off">
+    <div id="nwLetters" class="letters"></div>
+    <p class="hint" id="nwPick" style="margin:8px 0 0">Нажми букву, в которой она ошибается.</p>
+    <label for="nwBad">Какую букву пишет по ошибке</label>
+    <input type="text" id="nwBad" maxlength="1" placeholder="а">
+    <label for="nwType">Орфограмма</label>
+    <select id="nwType"></select>
+    <label for="nwCtx">Фраза со словом (её произносит игра)</label>
+    <input type="text" id="nwCtx" placeholder="Корова щиплет траву.">
+    <button class="btn big" id="addWord">Добавить в базу</button>
+    <div id="addMsg" class="msg"></div>
+  </div>
+
+  <h2>Игрок</h2>
+  <div class="card">
+    <label for="name">Имя — остаётся только на этом телефоне</label>
+    <input type="text" id="name" maxlength="20" placeholder="Имя">
+    <div id="nameMsg" class="msg"></div>
+  </div>
+</div>
+
+<script>
+/* Кабинет родителя. Отдельная страница, чтобы в игре у ребёнка
+   не было ни загрузки уроков, ни списков слов. Память общая:
+   адрес сайта один, значит localStorage тот же. */
+
+const $ = s => document.querySelector(s);
+
+// Орфограммы каталога. В приложении они придут из schema/orthograms.ts
+// (задача A3); здесь короткий список — он нужен только для ручного ввода.
+const CODES = {
+  ROOT_VOWEL_CHECK:"Безударная гласная в корне (проверяемая)",
+  ROOT_DICT:"Словарное слово",
+  ROOT_PAIRED_CONS:"Парная согласная в корне",
+  ROOT_SILENT_CONS:"Непроизносимая согласная",
+  DOUBLE_CONS:"Двойные согласные",
+  HUSHING:"После шипящих; чк, чн, нч, щн",
+  SEP_SIGNS:"Разделительные ъ и ь",
+  SOFT_SIGN_MARK:"Ь для мягкости",
+  SOFT_SIGN_NOUN:"Ь после шипящих у существительных",
+  PREFIX_SPELL:"Гласные и согласные в приставках",
+  PREFIX_PREP:"Приставка или предлог",
+  COMPOUND_VOWEL:"Соединительные о и е",
+  CAPITAL_PROPER:"Заглавная буква в именах",
+  NOUN_ENDING:"Окончания существительных",
+  ADJ_GENDER:"Родовые окончания прилагательных",
+  ADJ_ENDING:"Падежные окончания прилагательных",
+  VERB_ENDING:"Личные окончания глаголов",
+  VERB_SOFT_SIGN:"Ь после шипящих у глаголов",
+  TSYA:"-тся и -ться",
+  NE_VERB:"Не с глаголами",
+  PAST_SUFFIX:"Суффикс прошедшего времени",
+  PRON_PREP:"Предлоги с местоимениями",
+  ADVERB_O_A:"Наречия на -о и -а",
+  SUFFIX_IK_EK:"Суффиксы -ик и -ек",
+  SUFFIX_CUB:"Суффиксы детёнышей",
+  SUFFIX_DIM:"Ласкательные суффиксы",
+  SUFFIX_CONST:"Постоянные суффиксы",
+  SUFFIX_O_E_HUSH:"Суффиксы -ок и -ек после шипящих"
+};
+
+let POOL = [], LESSONS = [], MODE = {kind:"all"};
+let filter = {kind:"all"};
+
+const keyOf = w => w.t + "|" + w.i + "|" + w.type;
+const isHard = w => w.hard === true ? true : w.hard === false ? false
+      : ((w.st||{}).err > 0 && (w.st||{}).err >= (w.st||{}).ok);
+
+function load(){
+  try{
+    POOL = JSON.parse(localStorage.getItem("slovograd.pool") || "[]");
+    LESSONS = JSON.parse(localStorage.getItem("slovograd.lessons") || "[]");
+    MODE = JSON.parse(localStorage.getItem("slovograd.mode") || '{"kind":"all"}');
+  }catch(e){ POOL = []; LESSONS = []; MODE = {kind:"all"}; }
+}
+function save(){
+  try{
+    localStorage.setItem("slovograd.pool", JSON.stringify(POOL));
+    localStorage.setItem("slovograd.lessons", JSON.stringify(LESSONS));
+    localStorage.setItem("slovograd.mode", JSON.stringify(MODE));
+  }catch(e){}
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function msg(el, text, cls){ $(el).textContent = text; $(el).className = "msg " + (cls||""); }
+
+// ---------- уроки ----------
+function renderLessons(){
+  if(!LESSONS.length){ $("#lessons").innerHTML = '<div class="empty">Уроков пока нет.</div>'; return; }
+  $("#lessons").innerHTML = LESSONS.map((l,k) => {
+    const n = POOL.filter(w => w.src.includes(l.id)).length;
+    return '<div class="row"><div class="t"><b>' + esc(l.title) + '</b>' +
+      '<span>слов в базе: ' + n + '</span></div>' +
+      '<button class="ib" data-del="' + k + '" title="Убрать урок из списка">✕</button></div>';
+  }).join("");
+  [...document.querySelectorAll("#lessons [data-del]")].forEach(b =>
+    b.addEventListener("click", () => {
+      const l = LESSONS[+b.dataset.del];
+      if(!confirm("Убрать урок «" + l.title + "» из списка?\n\nСлова останутся в базе — их удаляют отдельно.")) return;
+      // снимаем метку урока со слов, сами слова не трогаем
+      POOL.forEach(w => { w.src = w.src.filter(id => id !== l.id); });
+      LESSONS.splice(+b.dataset.del, 1);
+      if(MODE.kind === "lesson" && MODE.id === l.id) MODE = {kind:"all"};
+      if(filter.kind === "lesson" && filter.id === l.id) filter = {kind:"all"};
+      save(); renderAll();
+      msg("#lessonMsg", "Урок убран. Слова остались в базе.", "ok");
+    }));
+}
+
+function convertLesson(data){
+  if(!data || data.schemaVersion !== 1 || !Array.isArray(data.words))
+    throw new Error("это не похоже на lesson.json: нет schemaVersion или words.");
+  const words = [], skipped = [];
+  for(const w of data.words){
+    const o = (w.orthograms || []).find(x => x.length === 1 && CODES[x.type]);
+    const bad = o && (o.distractors || []).find(d => d.length === 1 && d !== o.correct);
+    if(!o || !bad){ skipped.push(w.text); continue; }
+    words.push({t:w.text, em:w.emoji || "📘", i:o.index, ok:o.correct, bad,
+                type:o.type, ctx:w.context || w.text, m:o.method || null});
+  }
+  if(words.length < 3) throw new Error("годных слов " + words.length + ", нужно хотя бы 3.");
+  return {title:data.title || "Урок", words, skipped};
+}
+
+function addLesson(txt, where){
+  try{
+    let data;
+    try{ data = JSON.parse(txt); }
+    catch(e){ throw new Error(where === "file"
+      ? "этот файл не похож на урок. Нужен lesson.json от генератора."
+      : "текст не читается как JSON. Скопируй урок целиком, от { до }."); }
+    const res = convertLesson(data);
+    const same = LESSONS.find(l => l.title === res.title);
+    const id = same ? same.id : "L" + Date.now().toString(36);
+    if(same) same.n = res.words.length; else LESSONS.push({id, title:res.title, n:res.words.length});
+    let added = 0, merged = 0;
+    for(const w of res.words){
+      const old = POOL.find(p => keyOf(p) === keyOf(w));
+      if(old){ old.m = w.m || old.m; old.ctx = w.ctx || old.ctx; old.em = w.em || old.em;
+               if(!old.src.includes(id)) old.src.push(id); merged++; }
+      else { POOL.push({...w, src:[id], st:{ok:0,err:0}, hard:null}); added++; }
+    }
+    MODE = {kind:"lesson", id};     // игра сразу тренирует новый урок
+    save(); renderAll();
+    msg("#lessonMsg", "Готово: «" + res.title + "» — новых слов " + added +
+      (merged ? ", уже было " + merged : "") +
+      (res.skipped.length ? ". Пропущены: " + res.skipped.join(", ") : "") +
+      ". Игра переключена на этот урок.", "ok");
+  }catch(e){ msg("#lessonMsg", "Не вышло: " + e.message, "err"); }
+}
+
+$("#loadText").addEventListener("click", () => addLesson($("#json").value, "text"));
+$("#file").addEventListener("change", e => {
+  const f = e.target.files && e.target.files[0]; if(!f) return;
+  msg("#lessonMsg", "Читаю «" + f.name + "»…");
+  const r = new FileReader();
+  r.onload = () => addLesson(String(r.result), "file");
+  r.onerror = () => msg("#lessonMsg", "Не вышло прочитать файл.", "err");
+  r.readAsText(f, "utf-8"); e.target.value = "";
+});
+
+// ---------- база слов ----------
+function filtered(){
+  const q = $("#search").value.trim().toLowerCase();
+  let list = POOL;
+  if(filter.kind === "hard") list = list.filter(isHard);
+  else if(filter.kind === "none") list = list.filter(w => !w.src.length);
+  else if(filter.kind === "lesson") list = list.filter(w => w.src.includes(filter.id));
+  if(q) list = list.filter(w => w.t.toLowerCase().includes(q));
+  return list;
+}
+
+function renderFilters(){
+  const opts = [{kind:"all", name:"Все", n:POOL.length},
+                {kind:"hard", name:"Трудные", n:POOL.filter(isHard).length},
+                {kind:"none", name:"Без урока", n:POOL.filter(w => !w.src.length).length}]
+    .concat(LESSONS.map(l => ({kind:"lesson", id:l.id, name:l.title,
+                               n:POOL.filter(w => w.src.includes(l.id)).length})));
+  $("#filters").innerHTML = opts.map((o,k) =>
+    '<button class="chip' + (JSON.stringify({kind:o.kind, id:o.id}) === JSON.stringify({kind:filter.kind, id:filter.id}) ? " on" : "") +
+    '" data-k="' + k + '">' + esc(o.name) + ' <b>' + o.n + '</b></button>').join("");
+  [...document.querySelectorAll("#filters .chip")].forEach(b =>
+    b.addEventListener("click", () => { const o = opts[+b.dataset.k];
+      filter = {kind:o.kind, id:o.id}; renderFilters(); renderWords(); }));
+}
+
+function renderWords(){
+  const list = filtered();
+  if(!list.length){ $("#words").innerHTML = '<div class="empty">Ничего не найдено.</div>'; return; }
+  $("#words").innerHTML = list.map(w => {
+    const s = w.st || {ok:0, err:0};
+    const shown = Array.from(w.t).map((c,k) => k === w.i ? "<u>" + esc(c) + "</u>" : esc(c)).join("");
+    const lessons = w.src.map(id => (LESSONS.find(l => l.id === id)||{}).title).filter(Boolean);
+    return '<div class="row"><div class="t"><b>' + shown + '</b><span>' +
+      (lessons.length ? esc(lessons.join(", ")) : "без урока") + '</span></div>' +
+      '<span class="s">✓' + s.ok + ' ✗' + s.err + '</span>' +
+      '<button class="ib" data-hard="' + keyOf(w) + '" title="Трудное слово">' + (isHard(w) ? "🔴" : "⚪") + '</button>' +
+      '<button class="ib" data-del="' + keyOf(w) + '" title="Удалить слово">✕</button></div>';
+  }).join("");
+  [...document.querySelectorAll("#words [data-hard]")].forEach(b =>
+    b.addEventListener("click", () => {
+      const w = POOL.find(x => keyOf(x) === b.dataset.hard);
+      w.hard = isHard(w) ? false : true; save(); renderAll();
+    }));
+  [...document.querySelectorAll("#words [data-del]")].forEach(b =>
+    b.addEventListener("click", () => {
+      const i = POOL.findIndex(x => keyOf(x) === b.dataset.del);
+      if(i < 0) return;
+      if(!confirm("Удалить слово «" + POOL[i].t + "» из базы? Прогресс по нему пропадёт.")) return;
+      POOL.splice(i, 1); save(); renderAll();
+      msg("#wordsMsg", "Слово удалено.", "ok");
+    }));
+}
+
+$("#search").addEventListener("input", renderWords);
+
+// ---------- ручное добавление ----------
+let pick = -1;
+$("#nwType").innerHTML = Object.entries(CODES)
+  .map(([k,v]) => '<option value="' + k + '">' + esc(v) + '</option>').join("");
+
+function renderNewLetters(){
+  const t = $("#nw").value.trim();
+  $("#nwLetters").innerHTML = Array.from(t).map((c,k) =>
+    '<button class="lt' + (k === pick ? " on" : "") + '" data-k="' + k + '">' + esc(c) + '</button>').join("");
+  [...document.querySelectorAll("#nwLetters .lt")].forEach(b =>
+    b.addEventListener("click", () => { pick = +b.dataset.k; renderNewLetters(); }));
+  $("#nwPick").textContent = pick >= 0 && Array.from(t)[pick]
+    ? 'Опасная буква: «' + Array.from(t)[pick] + '» — её она и должна написать верно.'
+    : "Нажми букву, в которой она ошибается.";
+}
+$("#nw").addEventListener("input", () => { pick = -1; renderNewLetters(); });
+
+$("#addWord").addEventListener("click", () => {
+  const t = $("#nw").value.trim().toLowerCase();
+  const bad = $("#nwBad").value.trim().toLowerCase();
+  const type = $("#nwType").value;
+  const ctx = $("#nwCtx").value.trim();
+  const letters = Array.from(t);
+  if(letters.length < 3) return msg("#addMsg", "Слово слишком короткое.", "err");
+  if(pick < 0 || pick >= letters.length) return msg("#addMsg", "Нажми букву, в которой она ошибается.", "err");
+  const ok = letters[pick];
+  if(!bad) return msg("#addMsg", "Укажи букву, которую она пишет по ошибке.", "err");
+  if(bad === ok) return msg("#addMsg", "Неверная буква совпадает с верной.", "err");
+  const w = {t, em:"✏️", i:pick, ok, bad, type, ctx:ctx || t, m:null, src:[], st:{ok:0,err:0}, hard:true};
+  if(POOL.some(p => keyOf(p) === keyOf(w))) return msg("#addMsg", "Такое слово уже есть в базе.", "err");
+  POOL.push(w); save(); renderAll();
+  $("#nw").value = ""; $("#nwBad").value = ""; $("#nwCtx").value = ""; pick = -1; renderNewLetters();
+  msg("#addMsg", "Слово «" + t + "» добавлено и помечено трудным.", "ok");
+});
+
+// ---------- имя ----------
+try{ $("#name").value = localStorage.getItem("slovograd.name") || ""; }catch(e){}
+$("#name").addEventListener("input", e => {
+  try{ localStorage.setItem("slovograd.name", e.target.value.trim()); }catch(err){}
+  msg("#nameMsg", "Сохранено.", "ok");
+});
+
+function renderAll(){ renderLessons(); renderFilters(); renderWords(); }
+load(); renderAll(); renderNewLetters();
+</script>
+</body>
+</html>
