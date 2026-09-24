@@ -73,6 +73,21 @@
   #lessonPanel textarea{font:13px/1.4 ui-monospace,Consolas,monospace}
   #lessonPanel input{font:inherit;font-size:16px;min-height:48px}
   #lessonPanel .ok{color:var(--ok)} #lessonPanel .err{color:var(--bad)}
+  /* выбор набора: урок, все слова или только трудные */
+  #modes{display:flex;flex-wrap:wrap;gap:6px}
+  .mode{background:var(--panel2);border:2px solid var(--line);border-radius:10px;color:var(--ink);
+    font:inherit;font-size:14px;padding:9px 11px;min-height:44px;cursor:pointer}
+  .mode b{color:var(--dim);font-weight:700;margin-left:4px}
+  .mode.on{border-color:var(--ink-orange);background:#2a2117}
+  .mode.on b{color:var(--ink-orange)}
+  /* список слов в базе */
+  #words{max-height:260px;overflow:auto;margin-top:8px}
+  .wrow{display:flex;align-items:center;gap:8px;padding:6px 2px;border-bottom:1px solid var(--line)}
+  .wrow.dim{opacity:.45}
+  .wrow .wt{flex:1;font-size:15px}
+  .wrow .ws{font-size:13px;color:var(--dim);white-space:nowrap}
+  .wb{background:none;border:0;color:var(--ink);font-size:16px;cursor:pointer;
+    min-width:36px;min-height:36px;padding:0}
 
   h1{font-size:21px;margin:0 0 6px}
   .task{font-size:15px;color:var(--dim);margin:0 0 14px}
@@ -296,7 +311,15 @@
   <div id="lessonPanel" class="card-dark" hidden>
     <p class="task" style="margin:0 0 6px">Как зовут игрока — имя останется только на этом телефоне.</p>
     <input id="childName" type="text" placeholder="Имя" maxlength="20">
-    <p class="task" style="margin:12px 0 8px">Новый урок — файл <b>lesson.json</b> от генератора.</p>
+    <p class="task" style="margin:14px 0 6px">Что тренируем</p>
+    <div id="modes"></div>
+
+    <details style="margin-top:10px">
+      <summary class="task" style="cursor:pointer">Слова в базе</summary>
+      <div id="words"></div>
+    </details>
+
+    <p class="task" style="margin:14px 0 8px">Добавить урок — файл <b>lesson.json</b> от генератора.</p>
     <label class="btn big" for="lessonFile" style="margin-top:0">📂 Выбрать файл урока</label>
     <input id="lessonFile" type="file" accept=".json,application/json" hidden>
 
@@ -593,26 +616,105 @@ function convertLesson(data){
     words.push({t:w.text, em:w.emoji || "📘", i:o.index, ok:o.correct,
                 bad, type:o.type, ctx:w.context || w.text, m:o.method || null});
   }
-  if(words.length < 5)
-    throw new Error("Годных слов " + words.length + ", а нужно хотя бы 5.");
+  // трёх слов хватает: соседние карточки доберём из общей базы
+  if(words.length < 3)
+    throw new Error("Годных слов " + words.length + ", а нужно хотя бы 3.");
   return {title:data.title || "Урок", words, skipped};
 }
 
-function applyLesson(res){
-  LESSON.title = res.title; LESSON.words = res.words;
+// --- база слов ------------------------------------------------------
+// Слова лежат в общем пуле, а урок — это метка на слове. Тогда можно
+// и отработать ровно упражнение 110, и гонять трудные слова из всех
+// уроков разом. Слово из двух уроков — одно, но помнит оба источника,
+// и ошибки у него считаются общие.
+let POOL = [], LESSONS = [], MODE = {kind:"all"};
+
+const keyOf = w => w.t + "|" + w.i + "|" + w.type;
+
+function savePool(){
+  try{
+    localStorage.setItem("slovograd.pool", JSON.stringify(POOL));
+    localStorage.setItem("slovograd.lessons", JSON.stringify(LESSONS));
+    localStorage.setItem("slovograd.mode", JSON.stringify(MODE));
+  }catch(e){}
+}
+
+function loadPool(){
+  try{
+    POOL = JSON.parse(localStorage.getItem("slovograd.pool") || "[]");
+    LESSONS = JSON.parse(localStorage.getItem("slovograd.lessons") || "[]");
+    MODE = JSON.parse(localStorage.getItem("slovograd.mode") || '{"kind":"all"}');
+  }catch(e){ POOL = []; LESSONS = []; MODE = {kind:"all"}; }
+}
+
+// слово трудное: либо помечено руками, либо ошибок не меньше, чем верных
+function isHard(w){
+  if(w.hard === true) return true;
+  if(w.hard === false) return false;
+  const s = w.st || {ok:0, err:0};
+  return s.err > 0 && s.err >= s.ok;
+}
+
+function mergeLesson(res){
+  // тот же урок, загруженный заново (например, после пересборки),
+  // не должен появляться в списке второй раз
+  const same = LESSONS.find(l => l.title === res.title);
+  const id = same ? same.id : "L" + Date.now().toString(36);
+  if(same) same.n = res.words.length;
+  else LESSONS.push({id, title:res.title, n:res.words.length});
+  let added = 0, merged = 0;
+  for(const w of res.words){
+    const old = POOL.find(p => keyOf(p) === keyOf(w));
+    if(old){
+      // прогресс и пометки сохраняем, обновляем только объяснения
+      old.m = w.m || old.m; old.ctx = w.ctx || old.ctx; old.em = w.em || old.em;
+      if(!old.src.includes(id)) old.src.push(id);
+      merged++;
+    }else{
+      POOL.push({...w, src:[id], st:{ok:0, err:0}, hard:null});
+      added++;
+    }
+  }
+  MODE = {kind:"lesson", id};      // после загрузки сразу тренируем новый урок
+  savePool();
+  return {added, merged, id};
+}
+
+// слова, по которым сейчас идёт игра
+function activeWords(){
+  if(MODE.kind === "hard")   return POOL.filter(isHard);
+  if(MODE.kind === "lesson") return POOL.filter(w => w.src.includes(MODE.id));
+  return POOL;
+}
+
+function modeName(){
+  if(MODE.kind === "hard") return "Только трудные";
+  if(MODE.kind === "lesson"){
+    const l = LESSONS.find(x => x.id === MODE.id);
+    return l ? l.title : "Урок";
+  }
+  return "Все слова";
+}
+
+function resetGame(){
   used = new Set(); stars = 0; roundNo = 0; hp = 100;
   $("#stars").textContent = "⭐ 0"; $("#hp").style.width = "100%"; $("#round").textContent = "";
 }
 
 function buildRound(){
-  // не повторяем самозванца, пока не кончатся слова
-  let pool = shuffle(LESSON.words.filter(w => !used.has(w.t)));
-  if(!pool.length){ used = new Set(); pool = shuffle(LESSON.words); }
-  const imposter = pool[0];
-  used.add(imposter.t);
-  // остальные четверо — из других слов, по возможности другого типа
-  // соседи — из всего урока, даже если пул уже подчищен
-  const others = shuffle(LESSON.words.filter(w => w !== imposter)).slice(0, 4);
+  const set = activeWords();
+  // не повторяем самозванца, пока не кончатся слова набора
+  let fresh = shuffle(set.filter(w => !used.has(keyOf(w))));
+  if(!fresh.length){ used = new Set(); fresh = shuffle(set); }
+  const imposter = fresh[0];
+  used.add(keyOf(imposter));
+  // соседи — из этого же набора: тренируем урок, а не всё подряд.
+  // Если в наборе меньше пяти слов, добираем из общей базы.
+  let others = shuffle(set.filter(w => w !== imposter)).slice(0, 4);
+  if(others.length < 4){
+    const extra = shuffle(POOL.filter(w => w !== imposter && !others.includes(w)));
+    others = others.concat(extra.slice(0, 4 - others.length));
+  }
   const cards = shuffle([{w:imposter, guilty:true}, ...others.map(w=>({w, guilty:false}))]);
 
   // улики: верная + две чужие
@@ -787,9 +889,14 @@ function finishRound(){
              : "И сразу, без единой ошибки!";
   talk("Ай! " + line, "Ай! " + line, "sad");
 
+  // копим статистику по слову: из неё считаются «трудные»
+  const w = r.imposter;
+  w.st = w.st || {ok:0, err:0};
+  if(r.mistakes > 0) w.st.err++; else w.st.ok++;
+  savePool();
+
   // верное слово должно повисеть перед глазами: ради зрительного образа
   // всё и затевалось. Произносим его и держим, пока она не нажмёт «Дальше».
-  const w = r.imposter;
   const correct = Array.from(w.t)
     .map((c,k) => k === w.i ? '<span class="fixed">' + c + '</span>' : c).join("");
   setTimeout(() => autoSpeak(w.t), 700);
@@ -964,19 +1071,68 @@ $("#fontToggle").addEventListener("click", () => setPrint(!document.body.classLi
 // --- панель урока ---------------------------------------------------
 // Метка версии: по ней видно, обновилась ли страница на телефоне
 // или браузер показывает старую из кэша.
-const VERSION = "25 сентября, 14:05";
+const VERSION = "25 сентября, 15:30";
 $("#ver").textContent = VERSION;
 
-const DEFAULT_WORDS = LESSON.words.slice(), DEFAULT_TITLE = LESSON.title;
 const panel = $("#lessonPanel"), lmsg = $("#lessonMsg");
 
 function showLessonMsg(text, cls){ lmsg.textContent = text; lmsg.className = "task " + (cls || ""); }
+
+// база слов из памяти; при первом запуске кладём встроенный урок
+loadPool();
+if(!POOL.length){
+  mergeLesson({title:LESSON.title, words:LESSON.words, skipped:[]});
+  MODE = {kind:"all"}; savePool();
+}
+
+function setMode(m){ MODE = m; used = new Set(); savePool(); renderPanel(); resetGame(); startScreen(); }
+
+// Панель родителя: выбор набора, список уроков и список слов
+function renderPanel(){
+  const set = activeWords();
+  const modes = [{kind:"all"}, {kind:"hard"}].concat(LESSONS.map(l => ({kind:"lesson", id:l.id})));
+  $("#modes").innerHTML = modes.map((m, k) => {
+    const n = m.kind === "hard" ? POOL.filter(isHard).length
+            : m.kind === "all"  ? POOL.length
+            : POOL.filter(w => w.src.includes(m.id)).length;
+    const name = m.kind === "hard" ? "Только трудные"
+               : m.kind === "all"  ? "Все слова"
+               : (LESSONS.find(x => x.id === m.id) || {}).title;
+    const on = JSON.stringify(m) === JSON.stringify(MODE);
+    return '<button class="mode' + (on ? " on" : "") + '" data-k="' + k + '">' +
+           esc(name) + ' <b>' + n + '</b></button>';
+  }).join("");
+  [...document.querySelectorAll("#modes .mode")].forEach(b =>
+    b.addEventListener("click", () => setMode(modes[+b.dataset.k])));
+
+  $("#words").innerHTML = POOL.map((w, k) => {
+    const s = w.st || {ok:0, err:0};
+    const inSet = set.includes(w);
+    return '<div class="wrow' + (inSet ? "" : " dim") + '">' +
+      '<span class="wt">' + esc(w.t) + '</span>' +
+      '<span class="ws">✓' + s.ok + ' ✗' + s.err + '</span>' +
+      '<button class="wb" data-hard="' + k + '" title="Трудное слово">' + (isHard(w) ? "🔴" : "⚪") + '</button>' +
+      '<button class="wb" data-del="' + k + '" title="Убрать из базы">✕</button>' +
+      '</div>';
+  }).join("");
+  [...document.querySelectorAll("#words [data-hard]")].forEach(b =>
+    b.addEventListener("click", () => {
+      const w = POOL[+b.dataset.hard];
+      w.hard = isHard(w) ? false : true;     // вручную: включить или выключить
+      savePool(); renderPanel();
+    }));
+  [...document.querySelectorAll("#words [data-del]")].forEach(b =>
+    b.addEventListener("click", () => {
+      POOL.splice(+b.dataset.del, 1); savePool(); renderPanel(); startScreen();
+    }));
+}
 
 $("#lessonBtn").addEventListener("click", () => {
   panel.hidden = !panel.hidden;
   if(!panel.hidden){
     $("#childName").value = childName();
-    showLessonMsg("Сейчас в игре: «" + LESSON.title + "», слов: " + LESSON.words.length);
+    renderPanel();
+    showLessonMsg("Сейчас тренируем: «" + modeName() + "», слов: " + activeWords().length);
   }
 });
 
@@ -993,10 +1149,12 @@ function loadFromText(txt, where){
       ? "этот файл не похож на урок. Нужен lesson.json от генератора."
       : "текст не читается как JSON. Скопируй урок целиком, от { до }."); }
     const res = convertLesson(data);
-    applyLesson(res);
-    try{ localStorage.setItem("slovograd.lesson", txt); }catch(e){}
-    showLessonMsg("Готово: «" + res.title + "», слов " + res.words.length +
-      (res.skipped.length ? ". Пропущены (нет подходящей орфограммы): " + res.skipped.join(", ") : ""), "ok");
+    const {added, merged} = mergeLesson(res);
+    resetGame(); renderPanel();
+    showLessonMsg("Добавлен урок «" + res.title + "»: новых слов " + added +
+      (merged ? ", уже было " + merged : "") +
+      (res.skipped.length ? ". Пропущены: " + res.skipped.join(", ") : "") +
+      ". Тренируем этот урок.", "ok");
     panel.hidden = true;
     startScreen();
   }catch(e){ showLessonMsg("Не вышло: " + e.message, "err"); }
@@ -1016,19 +1174,16 @@ $("#lessonFile").addEventListener("change", e => {
   e.target.value = "";           // чтобы тот же файл можно было выбрать снова
 });
 
+// Очистка базы — действие родителя, и оно необратимо, поэтому с вопросом
 $("#lessonReset").addEventListener("click", () => {
-  applyLesson({title:DEFAULT_TITLE, words:DEFAULT_WORDS, skipped:[]});
-  try{ localStorage.removeItem("slovograd.lesson"); }catch(e){}
-  showLessonMsg("Вернулся урок по умолчанию: " + DEFAULT_WORDS.length + " слов", "ok");
-  panel.hidden = true;
+  if(!confirm("Удалить все слова и уроки из базы? Прогресс по ним пропадёт.")) return;
+  POOL = []; LESSONS = []; MODE = {kind:"all"};
+  mergeLesson({title:LESSON.title, words:LESSON.words, skipped:[]});
+  MODE = {kind:"all"}; savePool();
+  resetGame(); renderPanel();
+  showLessonMsg("База очищена, остался встроенный урок: " + POOL.length + " слов", "ok");
   startScreen();
 });
-
-// урок, загруженный в прошлый раз
-try{
-  const saved = localStorage.getItem("slovograd.lesson");
-  if(saved){ applyLesson(convertLesson(JSON.parse(saved))); $("#lessonJson").value = saved; }
-}catch(e){/* битый урок в памяти — играем на том, что зашит */}
 
 setQuiet(quiet);
 $("#voiceToggle").addEventListener("click", () => setQuiet(!quiet));
@@ -1041,10 +1196,11 @@ function startScreen(){
     '<h1>Словоград</h1>' +
     '<p class="task">Клякса пробралась в слова урока и портит буквы. ' +
     'Найди самозванца, докажи его вину и почини слово.</p>' +
-    '<p class="task">Урок: «' + LESSON.title + '», слов: ' + LESSON.words.length + '</p>' +
+    '<p class="task">Тренируем: «' + esc(modeName()) + '», слов: ' + activeWords().length + '</p>' +
     '<p class="task" style="opacity:.75">Версия игры: ' + VERSION + '</p>' +
     '<button class="btn big" id="start">Играть</button>';
   $("#start").addEventListener("click", () => {
+    panel.hidden = true;          // панель родителя ребёнку в игре не нужна
     autoSpeak("Начинаем!");
     nextRound();
   });
