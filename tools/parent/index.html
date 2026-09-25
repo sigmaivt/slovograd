@@ -17,17 +17,16 @@
   .card{background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:13px;margin-bottom:12px}
   button,select,input,textarea{font:inherit}
   .btn{display:block;width:100%;min-height:52px;margin-top:9px;border-radius:12px;
-       border:2px solid var(--line);background:var(--panel2);color:var(--ink);padding:12px;cursor:pointer}
-  .btn.big{background:var(--accent);border-color:var(--accent);color:#14161f;font-weight:800;text-align:center}
-  .btn.ghost{background:transparent;color:var(--dim);min-height:44px;font-size:14px;text-align:center}
+       border:2px solid var(--line);background:var(--panel2);color:var(--ink);padding:12px;cursor:pointer;text-align:center}
+  .btn.big{background:var(--accent);border-color:var(--accent);color:#14161f;font-weight:800}
   input[type=text],select,textarea{width:100%;background:var(--panel2);color:var(--ink);
        border:2px solid var(--line);border-radius:10px;padding:10px;min-height:48px}
-  textarea{min-height:110px;font:13px/1.4 ui-monospace,Consolas,monospace;resize:vertical}
+  textarea{min-height:90px;font:13px/1.45 ui-monospace,Consolas,monospace;resize:vertical}
   label{display:block;font-size:13px;color:var(--dim);margin:10px 0 4px}
   .row{display:flex;align-items:center;gap:8px;padding:8px 2px;border-bottom:1px solid var(--line)}
   .row:last-child{border-bottom:0}
   .row .t{flex:1;min-width:0}
-  .row .t b{display:block;font-size:16px;overflow:hidden;text-overflow:ellipsis}
+  .row .t b{display:block;font-size:16px}
   .row .t span{font-size:12px;color:var(--dim)}
   .row .s{font-size:13px;color:var(--dim);white-space:nowrap}
   .ib{background:none;border:0;color:var(--ink);font-size:17px;cursor:pointer;min-width:40px;min-height:40px}
@@ -42,28 +41,31 @@
   .lt.on{border-color:var(--accent);background:#2a2117;color:var(--accent)}
   .msg{font-size:14px;margin-top:10px} .msg.ok{color:var(--ok)} .msg.err{color:var(--bad)}
   .empty{color:var(--dim);font-size:14px;padding:10px 2px}
+  .note{background:#2a2117;border:2px solid var(--accent);border-radius:12px;padding:11px;
+        font-size:14px;margin-top:10px}
   a{color:var(--accent)}
+  code{font:13px ui-monospace,Consolas,monospace;color:var(--ink);word-break:break-all}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Кабинет</h1>
-  <p class="hint">Здесь ты готовишь материал, а дочка просто играет.
-    Игра и кабинет пользуются одной памятью этого телефона —
-    <a href="../imposter/">открыть игру</a>.</p>
+  <p class="hint" id="head">Уроки и слова хранятся в репозитории на GitHub. Ты правишь их там —
+    у дочки обновляется при следующем запуске игры с интернетом.
+    <a href="../imposter/">Открыть игру</a>.</p>
+
+  <div id="status" class="card"></div>
 
   <h2>Уроки</h2>
   <div class="card">
     <div id="lessons"></div>
-    <label for="file">Добавить урок — файл lesson.json от генератора</label>
-    <label class="btn big" for="file" style="margin-top:0">📂 Выбрать файл урока</label>
-    <input id="file" type="file" accept=".json,application/json" hidden>
-    <details style="margin-top:10px">
-      <summary class="hint" style="cursor:pointer;margin:0">Или вставить текстом</summary>
-      <textarea id="json" placeholder='{"schemaVersion": 1, ...}'></textarea>
-      <button class="btn" id="loadText">Загрузить из текста</button>
-    </details>
-    <div id="lessonMsg" class="msg"></div>
+    <div class="note">
+      Добавить урок: положи файл в <code>data/lessons/</code> и впиши его в
+      <code>data/index.json</code>.
+      <a href="https://github.com/sigmaivt/slovograd/tree/main/data/lessons" target="_blank">Открыть папку уроков</a> ·
+      <a href="https://github.com/sigmaivt/slovograd/edit/main/data/index.json" target="_blank">править index.json</a>.
+      <br>Проще всего — прислать урок мне в чат, я добавлю сам.
+    </div>
   </div>
 
   <h2>База слов</h2>
@@ -71,12 +73,13 @@
     <div class="chips" id="filters"></div>
     <input type="text" id="search" placeholder="Поиск слова">
     <div id="words" style="margin-top:6px"></div>
-    <div id="wordsMsg" class="msg"></div>
+    <p class="hint" id="wordsHint" style="margin-top:10px"></p>
   </div>
 
   <h2>Добавить слово вручную</h2>
   <div class="card">
-    <p class="hint" style="margin:0 0 8px">Для ошибок из школьной тетради — приложение о них не знает.</p>
+    <p class="hint" style="margin:0 0 8px">Для ошибок из тетради. Здесь готовится кусочек текста —
+      его надо вставить в <code>data/manual.json</code> на GitHub.</p>
     <label for="nw">Слово целиком, как пишется правильно</label>
     <input type="text" id="nw" placeholder="например, корова" autocomplete="off">
     <div id="nwLetters" class="letters"></div>
@@ -87,163 +90,64 @@
     <select id="nwType"></select>
     <label for="nwCtx">Фраза со словом (её произносит игра)</label>
     <input type="text" id="nwCtx" placeholder="Корова щиплет траву.">
-    <button class="btn big" id="addWord">Добавить в базу</button>
+    <label for="nwHint">Как проверить (необязательно)</label>
+    <input type="text" id="nwHint" placeholder="Словарное слово: рога круглые, как буква О.">
+    <button class="btn big" id="make">Собрать текст для вставки</button>
+    <textarea id="out" readonly placeholder="здесь появится текст"></textarea>
+    <button class="btn" id="copy">Скопировать</button>
+    <a class="btn" href="https://github.com/sigmaivt/slovograd/edit/main/data/manual.json" target="_blank">Открыть manual.json на GitHub</a>
     <div id="addMsg" class="msg"></div>
   </div>
 
   <h2>Игрок</h2>
   <div class="card">
-    <label for="name">Имя — остаётся только на этом телефоне</label>
+    <label for="name">Имя — остаётся только на этом устройстве</label>
     <input type="text" id="name" maxlength="20" placeholder="Имя">
     <div id="nameMsg" class="msg"></div>
   </div>
 </div>
 
+<script src="../shared/content.js"></script>
 <script>
-/* Кабинет родителя. Отдельная страница, чтобы в игре у ребёнка
-   не было ни загрузки уроков, ни списков слов. Память общая:
-   адрес сайта один, значит localStorage тот же. */
+/* Кабинет: показывает то, что лежит в репозитории, и прогресс с этого
+   устройства. Писать в репозиторий из браузера нельзя (нужен токен,
+   а он на странице означал бы открытый доступ всем), поэтому кабинет
+   готовит текст, который ты вставляешь на GitHub. */
 
 const $ = s => document.querySelector(s);
-
-// Орфограммы каталога. В приложении они придут из schema/orthograms.ts
-// (задача A3); здесь короткий список — он нужен только для ручного ввода.
-const CODES = {
-  ROOT_VOWEL_CHECK:"Безударная гласная в корне (проверяемая)",
-  ROOT_DICT:"Словарное слово",
-  ROOT_PAIRED_CONS:"Парная согласная в корне",
-  ROOT_SILENT_CONS:"Непроизносимая согласная",
-  DOUBLE_CONS:"Двойные согласные",
-  HUSHING:"После шипящих; чк, чн, нч, щн",
-  SEP_SIGNS:"Разделительные ъ и ь",
-  SOFT_SIGN_MARK:"Ь для мягкости",
-  SOFT_SIGN_NOUN:"Ь после шипящих у существительных",
-  PREFIX_SPELL:"Гласные и согласные в приставках",
-  PREFIX_PREP:"Приставка или предлог",
-  COMPOUND_VOWEL:"Соединительные о и е",
-  CAPITAL_PROPER:"Заглавная буква в именах",
-  NOUN_ENDING:"Окончания существительных",
-  ADJ_GENDER:"Родовые окончания прилагательных",
-  ADJ_ENDING:"Падежные окончания прилагательных",
-  VERB_ENDING:"Личные окончания глаголов",
-  VERB_SOFT_SIGN:"Ь после шипящих у глаголов",
-  TSYA:"-тся и -ться",
-  NE_VERB:"Не с глаголами",
-  PAST_SUFFIX:"Суффикс прошедшего времени",
-  PRON_PREP:"Предлоги с местоимениями",
-  ADVERB_O_A:"Наречия на -о и -а",
-  SUFFIX_IK_EK:"Суффиксы -ик и -ек",
-  SUFFIX_CUB:"Суффиксы детёнышей",
-  SUFFIX_DIM:"Ласкательные суффиксы",
-  SUFFIX_CONST:"Постоянные суффиксы",
-  SUFFIX_O_E_HUSH:"Суффиксы -ок и -ек после шипящих"
-};
-
-let POOL = [], LESSONS = [], MODE = {kind:"all"};
-let filter = {kind:"all"};
-
-const keyOf = w => w.t + "|" + w.i + "|" + w.type;
-const isHard = w => w.hard === true ? true : w.hard === false ? false
-      : ((w.st||{}).err > 0 && (w.st||{}).err >= (w.st||{}).ok);
-
-function load(){
-  try{
-    POOL = JSON.parse(localStorage.getItem("slovograd.pool") || "[]");
-    LESSONS = JSON.parse(localStorage.getItem("slovograd.lessons") || "[]");
-    MODE = JSON.parse(localStorage.getItem("slovograd.mode") || '{"kind":"all"}');
-  }catch(e){ POOL = []; LESSONS = []; MODE = {kind:"all"}; }
-}
-function save(){
-  try{
-    localStorage.setItem("slovograd.pool", JSON.stringify(POOL));
-    localStorage.setItem("slovograd.lessons", JSON.stringify(LESSONS));
-    localStorage.setItem("slovograd.mode", JSON.stringify(MODE));
-  }catch(e){}
-}
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function msg(el, text, cls){ $(el).textContent = text; $(el).className = "msg " + (cls||""); }
 
-// ---------- уроки ----------
+let CONTENT = null, POOL = [], STATS = SG.loadStats();
+let filter = {kind:"all"};
+
+const KEY_HINT = "Ключ слова: слово|позиция|код. Позиция считается с нуля.";
+
+function renderStatus(){
+  const c = CONTENT;
+  $("#status").innerHTML = c.offline
+    ? '<b style="color:var(--bad)">Нет связи с репозиторием.</b><br>' +
+      '<span class="hint">' + (POOL.length ? "Показано последнее скачанное." : "И ничего не скачано раньше.") + '</span>'
+    : '<b style="color:var(--ok)">Данные из репозитория.</b><br>' +
+      '<span class="hint">Обновлено: ' + esc(c.updated || "—") + ' · слов ' + POOL.length +
+      ' · уроков ' + c.lessons.length + '</span>' +
+      (c.bad && c.bad.length ? '<div class="msg err">Не удалось разобрать: ' + esc(c.bad.join(", ")) + '</div>' : "");
+}
+
 function renderLessons(){
-  if(!LESSONS.length){ $("#lessons").innerHTML = '<div class="empty">Уроков пока нет.</div>'; return; }
-  $("#lessons").innerHTML = LESSONS.map((l,k) => {
-    const n = POOL.filter(w => w.src.includes(l.id)).length;
-    return '<div class="row"><div class="t"><b>' + esc(l.title) + '</b>' +
-      '<span>слов в базе: ' + n + '</span></div>' +
-      '<button class="ib" data-del="' + k + '" title="Убрать урок из списка">✕</button></div>';
-  }).join("");
-  [...document.querySelectorAll("#lessons [data-del]")].forEach(b =>
-    b.addEventListener("click", () => {
-      const l = LESSONS[+b.dataset.del];
-      if(!confirm("Убрать урок «" + l.title + "» из списка?\n\nСлова останутся в базе — их удаляют отдельно.")) return;
-      // снимаем метку урока со слов, сами слова не трогаем
-      POOL.forEach(w => { w.src = w.src.filter(id => id !== l.id); });
-      LESSONS.splice(+b.dataset.del, 1);
-      if(MODE.kind === "lesson" && MODE.id === l.id) MODE = {kind:"all"};
-      if(filter.kind === "lesson" && filter.id === l.id) filter = {kind:"all"};
-      save(); renderAll();
-      msg("#lessonMsg", "Урок убран. Слова остались в базе.", "ok");
-    }));
+  const ls = CONTENT.lessons;
+  $("#lessons").innerHTML = ls.length ? ls.map(l =>
+    '<div class="row"><div class="t"><b>' + esc(l.title) + '</b>' +
+    '<span>слов: ' + POOL.filter(w => w.src.includes(l.id)).length + '</span></div>' +
+    (l.id === "manual" ? "" :
+      '<a class="ib" title="Править в репозитории" target="_blank" href="https://github.com/sigmaivt/slovograd/edit/main/data/index.json">✎</a>') +
+    '</div>').join("") : '<div class="empty">Уроков пока нет.</div>';
 }
 
-function convertLesson(data){
-  if(!data || data.schemaVersion !== 1 || !Array.isArray(data.words))
-    throw new Error("это не похоже на lesson.json: нет schemaVersion или words.");
-  const words = [], skipped = [];
-  for(const w of data.words){
-    const o = (w.orthograms || []).find(x => x.length === 1 && CODES[x.type]);
-    const bad = o && (o.distractors || []).find(d => d.length === 1 && d !== o.correct);
-    if(!o || !bad){ skipped.push(w.text); continue; }
-    words.push({t:w.text, em:w.emoji || "📘", i:o.index, ok:o.correct, bad,
-                type:o.type, ctx:w.context || w.text, m:o.method || null});
-  }
-  if(words.length < 3) throw new Error("годных слов " + words.length + ", нужно хотя бы 3.");
-  return {title:data.title || "Урок", words, skipped};
-}
-
-function addLesson(txt, where){
-  try{
-    let data;
-    try{ data = JSON.parse(txt); }
-    catch(e){ throw new Error(where === "file"
-      ? "этот файл не похож на урок. Нужен lesson.json от генератора."
-      : "текст не читается как JSON. Скопируй урок целиком, от { до }."); }
-    const res = convertLesson(data);
-    const same = LESSONS.find(l => l.title === res.title);
-    const id = same ? same.id : "L" + Date.now().toString(36);
-    if(same) same.n = res.words.length; else LESSONS.push({id, title:res.title, n:res.words.length});
-    let added = 0, merged = 0;
-    for(const w of res.words){
-      const old = POOL.find(p => keyOf(p) === keyOf(w));
-      if(old){ old.m = w.m || old.m; old.ctx = w.ctx || old.ctx; old.em = w.em || old.em;
-               if(!old.src.includes(id)) old.src.push(id); merged++; }
-      else { POOL.push({...w, src:[id], st:{ok:0,err:0}, hard:null}); added++; }
-    }
-    MODE = {kind:"lesson", id};     // игра сразу тренирует новый урок
-    save(); renderAll();
-    msg("#lessonMsg", "Готово: «" + res.title + "» — новых слов " + added +
-      (merged ? ", уже было " + merged : "") +
-      (res.skipped.length ? ". Пропущены: " + res.skipped.join(", ") : "") +
-      ". Игра переключена на этот урок.", "ok");
-  }catch(e){ msg("#lessonMsg", "Не вышло: " + e.message, "err"); }
-}
-
-$("#loadText").addEventListener("click", () => addLesson($("#json").value, "text"));
-$("#file").addEventListener("change", e => {
-  const f = e.target.files && e.target.files[0]; if(!f) return;
-  msg("#lessonMsg", "Читаю «" + f.name + "»…");
-  const r = new FileReader();
-  r.onload = () => addLesson(String(r.result), "file");
-  r.onerror = () => msg("#lessonMsg", "Не вышло прочитать файл.", "err");
-  r.readAsText(f, "utf-8"); e.target.value = "";
-});
-
-// ---------- база слов ----------
 function filtered(){
   const q = $("#search").value.trim().toLowerCase();
   let list = POOL;
-  if(filter.kind === "hard") list = list.filter(isHard);
-  else if(filter.kind === "none") list = list.filter(w => !w.src.length);
+  if(filter.kind === "hard") list = list.filter(SG.isHard);
   else if(filter.kind === "lesson") list = list.filter(w => w.src.includes(filter.id));
   if(q) list = list.filter(w => w.t.toLowerCase().includes(q));
   return list;
@@ -251,12 +155,11 @@ function filtered(){
 
 function renderFilters(){
   const opts = [{kind:"all", name:"Все", n:POOL.length},
-                {kind:"hard", name:"Трудные", n:POOL.filter(isHard).length},
-                {kind:"none", name:"Без урока", n:POOL.filter(w => !w.src.length).length}]
-    .concat(LESSONS.map(l => ({kind:"lesson", id:l.id, name:l.title,
-                               n:POOL.filter(w => w.src.includes(l.id)).length})));
+                {kind:"hard", name:"Трудные", n:POOL.filter(SG.isHard).length}]
+    .concat(CONTENT.lessons.map(l => ({kind:"lesson", id:l.id, name:l.title,
+                                       n:POOL.filter(w => w.src.includes(l.id)).length})));
   $("#filters").innerHTML = opts.map((o,k) =>
-    '<button class="chip' + (JSON.stringify({kind:o.kind, id:o.id}) === JSON.stringify({kind:filter.kind, id:filter.id}) ? " on" : "") +
+    '<button class="chip' + (o.kind === filter.kind && o.id === filter.id ? " on" : "") +
     '" data-k="' + k + '">' + esc(o.name) + ' <b>' + o.n + '</b></button>').join("");
   [...document.querySelectorAll("#filters .chip")].forEach(b =>
     b.addEventListener("click", () => { const o = opts[+b.dataset.k];
@@ -265,37 +168,30 @@ function renderFilters(){
 
 function renderWords(){
   const list = filtered();
+  $("#wordsHint").textContent = "Чтобы убрать слово или сделать его всегда трудным, впиши его ключ " +
+    "в index.json, в excluded или hard. " + KEY_HINT + " Нажми ключ — он скопируется.";
   if(!list.length){ $("#words").innerHTML = '<div class="empty">Ничего не найдено.</div>'; return; }
   $("#words").innerHTML = list.map(w => {
     const s = w.st || {ok:0, err:0};
     const shown = Array.from(w.t).map((c,k) => k === w.i ? "<u>" + esc(c) + "</u>" : esc(c)).join("");
-    const lessons = w.src.map(id => (LESSONS.find(l => l.id === id)||{}).title).filter(Boolean);
-    return '<div class="row"><div class="t"><b>' + shown + '</b><span>' +
-      (lessons.length ? esc(lessons.join(", ")) : "без урока") + '</span></div>' +
+    const from = w.src.map(id => (CONTENT.lessons.find(l => l.id === id)||{}).title).filter(Boolean);
+    return '<div class="row"><div class="t"><b>' + shown + (SG.isHard(w) ? " 🔴" : "") + '</b>' +
+      '<span>' + esc(from.join(", ") || "—") + '</span></div>' +
       '<span class="s">✓' + s.ok + ' ✗' + s.err + '</span>' +
-      '<button class="ib" data-hard="' + keyOf(w) + '" title="Трудное слово">' + (isHard(w) ? "🔴" : "⚪") + '</button>' +
-      '<button class="ib" data-del="' + keyOf(w) + '" title="Удалить слово">✕</button></div>';
+      '<button class="ib" data-key="' + esc(SG.keyOf(w)) + '" title="Скопировать ключ">🔑</button></div>';
   }).join("");
-  [...document.querySelectorAll("#words [data-hard]")].forEach(b =>
-    b.addEventListener("click", () => {
-      const w = POOL.find(x => keyOf(x) === b.dataset.hard);
-      w.hard = isHard(w) ? false : true; save(); renderAll();
-    }));
-  [...document.querySelectorAll("#words [data-del]")].forEach(b =>
-    b.addEventListener("click", () => {
-      const i = POOL.findIndex(x => keyOf(x) === b.dataset.del);
-      if(i < 0) return;
-      if(!confirm("Удалить слово «" + POOL[i].t + "» из базы? Прогресс по нему пропадёт.")) return;
-      POOL.splice(i, 1); save(); renderAll();
-      msg("#wordsMsg", "Слово удалено.", "ok");
+  [...document.querySelectorAll("#words [data-key]")].forEach(b =>
+    b.addEventListener("click", async () => {
+      try{ await navigator.clipboard.writeText(b.dataset.key);
+           msg("#wordsHint", "Ключ скопирован: " + b.dataset.key, "ok"); }
+      catch(e){ prompt("Скопируй ключ:", b.dataset.key); }
     }));
 }
-
 $("#search").addEventListener("input", renderWords);
 
-// ---------- ручное добавление ----------
+// ---------- заготовка слова для manual.json ----------
 let pick = -1;
-$("#nwType").innerHTML = Object.entries(CODES)
+$("#nwType").innerHTML = Object.entries(SG.CODES)
   .map(([k,v]) => '<option value="' + k + '">' + esc(v) + '</option>').join("");
 
 function renderNewLetters(){
@@ -310,22 +206,28 @@ function renderNewLetters(){
 }
 $("#nw").addEventListener("input", () => { pick = -1; renderNewLetters(); });
 
-$("#addWord").addEventListener("click", () => {
+$("#make").addEventListener("click", () => {
   const t = $("#nw").value.trim().toLowerCase();
   const bad = $("#nwBad").value.trim().toLowerCase();
-  const type = $("#nwType").value;
-  const ctx = $("#nwCtx").value.trim();
   const letters = Array.from(t);
   if(letters.length < 3) return msg("#addMsg", "Слово слишком короткое.", "err");
   if(pick < 0 || pick >= letters.length) return msg("#addMsg", "Нажми букву, в которой она ошибается.", "err");
   const ok = letters[pick];
   if(!bad) return msg("#addMsg", "Укажи букву, которую она пишет по ошибке.", "err");
   if(bad === ok) return msg("#addMsg", "Неверная буква совпадает с верной.", "err");
-  const w = {t, em:"✏️", i:pick, ok, bad, type, ctx:ctx || t, m:null, src:[], st:{ok:0,err:0}, hard:true};
-  if(POOL.some(p => keyOf(p) === keyOf(w))) return msg("#addMsg", "Такое слово уже есть в базе.", "err");
-  POOL.push(w); save(); renderAll();
-  $("#nw").value = ""; $("#nwBad").value = ""; $("#nwCtx").value = ""; pick = -1; renderNewLetters();
-  msg("#addMsg", "Слово «" + t + "» добавлено и помечено трудным.", "ok");
+
+  const obj = {text:t, index:pick, correct:ok, wrong:bad, type:$("#nwType").value,
+               context:$("#nwCtx").value.trim() || t};
+  const h = $("#nwHint").value.trim();
+  if(h) obj.hint = h;
+  $("#out").value = JSON.stringify(obj, null, 2) + ",";
+  msg("#addMsg", "Готово. Вставь этот кусочек в manual.json, в список words — первым, запятая уже стоит.", "ok");
+});
+
+$("#copy").addEventListener("click", async () => {
+  if(!$("#out").value) return;
+  try{ await navigator.clipboard.writeText($("#out").value); msg("#addMsg", "Скопировано.", "ok"); }
+  catch(e){ $("#out").select(); msg("#addMsg", "Скопируй вручную из поля.", "err"); }
 });
 
 // ---------- имя ----------
@@ -335,8 +237,13 @@ $("#name").addEventListener("input", e => {
   msg("#nameMsg", "Сохранено.", "ok");
 });
 
-function renderAll(){ renderLessons(); renderFilters(); renderWords(); }
-load(); renderAll(); renderNewLetters();
+// ---------- старт ----------
+$("#status").innerHTML = '<span class="hint">Читаю репозиторий…</span>';
+SG.fetchContent("../../data/").then(c => {
+  CONTENT = c;
+  POOL = SG.buildPool(c, STATS);
+  renderStatus(); renderLessons(); renderFilters(); renderWords(); renderNewLetters();
+});
 </script>
 </body>
 </html>

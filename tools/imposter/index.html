@@ -330,6 +330,7 @@
   <div id="screen"></div>
 </div>
 
+<script src="../shared/content.js"></script>
 <script>
 /* ============================================================
    «Кто самозванец?» — прототип для задачи 0.4.
@@ -616,61 +617,28 @@ function convertLesson(data){
 }
 
 // --- база слов ------------------------------------------------------
-// Слова лежат в общем пуле, а урок — это метка на слове. Тогда можно
-// и отработать ровно упражнение 110, и гонять трудные слова из всех
-// уроков разом. Слово из двух уроков — одно, но помнит оба источника,
-// и ошибки у него считаются общие.
+// Содержимое (уроки, ручные слова, исключения) лежит в репозитории и
+// правится родителем; сюда оно только читается. На устройстве остаётся
+// прогресс: сколько раз слово отвечено верно и сколько с ошибкой.
 let POOL = [], LESSONS = [], MODE = {kind:"all"};
+let STATS = SG.loadStats(), CONTENT = null;
 
-const keyOf = w => w.t + "|" + w.i + "|" + w.type;
+const keyOf = SG.keyOf, isHard = SG.isHard;
 
-function savePool(){
-  try{
-    localStorage.setItem("slovograd.pool", JSON.stringify(POOL));
-    localStorage.setItem("slovograd.lessons", JSON.stringify(LESSONS));
-    localStorage.setItem("slovograd.mode", JSON.stringify(MODE));
-  }catch(e){}
+function saveMode(){
+  try{ localStorage.setItem("slovograd.mode", JSON.stringify(MODE)); }catch(e){}
+}
+function loadMode(){
+  try{ MODE = JSON.parse(localStorage.getItem("slovograd.mode") || '{"kind":"all"}'); }
+  catch(e){ MODE = {kind:"all"}; }
 }
 
-function loadPool(){
-  try{
-    POOL = JSON.parse(localStorage.getItem("slovograd.pool") || "[]");
-    LESSONS = JSON.parse(localStorage.getItem("slovograd.lessons") || "[]");
-    MODE = JSON.parse(localStorage.getItem("slovograd.mode") || '{"kind":"all"}');
-  }catch(e){ POOL = []; LESSONS = []; MODE = {kind:"all"}; }
-}
-
-// слово трудное: либо помечено руками, либо ошибок не меньше, чем верных
-function isHard(w){
-  if(w.hard === true) return true;
-  if(w.hard === false) return false;
-  const s = w.st || {ok:0, err:0};
-  return s.err > 0 && s.err >= s.ok;
-}
-
-function mergeLesson(res){
-  // тот же урок, загруженный заново (например, после пересборки),
-  // не должен появляться в списке второй раз
-  const same = LESSONS.find(l => l.title === res.title);
-  const id = same ? same.id : "L" + Date.now().toString(36);
-  if(same) same.n = res.words.length;
-  else LESSONS.push({id, title:res.title, n:res.words.length});
-  let added = 0, merged = 0;
-  for(const w of res.words){
-    const old = POOL.find(p => keyOf(p) === keyOf(w));
-    if(old){
-      // прогресс и пометки сохраняем, обновляем только объяснения
-      old.m = w.m || old.m; old.ctx = w.ctx || old.ctx; old.em = w.em || old.em;
-      if(!old.src.includes(id)) old.src.push(id);
-      merged++;
-    }else{
-      POOL.push({...w, src:[id], st:{ok:0, err:0}, hard:null});
-      added++;
-    }
-  }
-  MODE = {kind:"lesson", id};      // после загрузки сразу тренируем новый урок
-  savePool();
-  return {added, merged, id};
+function rebuild(){
+  POOL = SG.buildPool(CONTENT, STATS);
+  LESSONS = CONTENT.lessons.slice();
+  // урок мог исчезнуть из репозитория — не оставляем игру с пустым набором
+  if(MODE.kind === "lesson" && !LESSONS.some(l => l.id === MODE.id)) MODE = {kind:"all"};
+  if(MODE.kind === "hard" && !POOL.filter(isHard).length) MODE = {kind:"all"};
 }
 
 // слова, по которым сейчас идёт игра
@@ -889,11 +857,12 @@ function finishRound(){
              : "И сразу, без единой ошибки!";
   talk("Ай! " + line, "Ай! " + line, "sad");
 
-  // копим статистику по слову: из неё считаются «трудные»
+  // прогресс по слову остаётся на устройстве; из него считаются «трудные»
   const w = r.imposter;
   w.st = w.st || {ok:0, err:0};
   if(r.mistakes > 0) w.st.err++; else w.st.ok++;
-  savePool();
+  STATS[keyOf(w)] = w.st;
+  SG.saveStats(STATS);
 
   // верное слово должно повисеть перед глазами: ради зрительного образа
   // всё и затевалось. Произносим его и держим, пока она не нажмёт «Дальше».
@@ -1071,21 +1040,14 @@ $("#fontToggle").addEventListener("click", () => setPrint(!document.body.classLi
 // --- панель урока ---------------------------------------------------
 // Метка версии: по ней видно, обновилась ли страница на телефоне
 // или браузер показывает старую из кэша.
-const VERSION = "25 сентября, 17:40";
+const VERSION = "26 сентября, 10:20";
 $("#ver").textContent = VERSION;
 
 const panel = $("#lessonPanel"), lmsg = $("#lessonMsg");
 
 function showLessonMsg(text, cls){ lmsg.textContent = text; lmsg.className = "task " + (cls || ""); }
 
-// база слов из памяти; при первом запуске кладём встроенный урок
-loadPool();
-if(!POOL.length){
-  mergeLesson({title:LESSON.title, words:LESSON.words, skipped:[]});
-  MODE = {kind:"all"}; savePool();
-}
-
-function setMode(m){ MODE = m; used = new Set(); savePool(); renderPanel(); resetGame(); startScreen(); }
+function setMode(m){ MODE = m; used = new Set(); saveMode(); renderPanel(); resetGame(); startScreen(); }
 
 // В игре — только выбор набора. Всё остальное (уроки, база слов,
 // имя игрока) живёт в кабинете: ../parent/
@@ -1111,7 +1073,8 @@ $("#lessonBtn").addEventListener("click", () => {
   panel.hidden = !panel.hidden;
   if(!panel.hidden){
     renderPanel();
-    showLessonMsg("Сейчас тренируем: «" + modeName() + "», слов: " + activeWords().length);
+    showLessonMsg("Сейчас тренируем: «" + modeName() + "», слов: " + activeWords().length +
+      (CONTENT && CONTENT.offline ? ". Нет интернета — играем на том, что скачано." : ""));
   }
 });
 
@@ -1136,8 +1099,24 @@ function startScreen(){
     nextRound();
   });
 }
-startScreen();
+// Содержимое читаем из репозитория; пока грузится — экран ожидания.
+// Нет сети — берём последнее скачанное, игра всё равно идёт.
+screen.innerHTML = '<h1>Словоград</h1><p class="task">Загружаю слова…</p>';
 talk("Привет" + (childName() ? ", " + esc(childName()) : "") + "! Я Клякса. Спорим, ты меня не найдёшь?", null, "smug");
+
+loadMode();
+SG.fetchContent("../../data/").then(c => {
+  CONTENT = c;
+  rebuild();
+  if(!POOL.length){
+    // ни сети, ни скачанного раньше: играем на встроенном уроке
+    CONTENT = {words:LESSON.words.map(w => ({...w, src:["builtin"]})),
+               lessons:[{id:"builtin", title:LESSON.title, n:LESSON.words.length}],
+               excluded:[], hard:[], bad:[], offline:true};
+    rebuild();
+  }
+  startScreen();
+});
 </script>
 </body>
 </html>
