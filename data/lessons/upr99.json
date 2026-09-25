@@ -1,0 +1,353 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-09-24-upr99",
+  "title": "Упр. 99: гласные и согласные в корне",
+  "source": {
+    "type": "textbook",
+    "ref": "Упр. 99, текст К. Паустовского"
+  },
+  "focusOrthograms": [
+    "ROOT_VOWEL_CHECK",
+    "ROOT_DICT",
+    "ROOT_PAIRED_CONS",
+    "ROOT_SILENT_CONS"
+  ],
+  "rules": [
+    {
+      "code": "ROOT_VOWEL_CHECK",
+      "kidExplanation": "Гласная без ударения прячется и звучит неясно. Измени слово или подбери родственное так, чтобы ударение упало на неё, — и она скажет своё имя.",
+      "steps": [
+        "Найди корень",
+        "Найди в корне гласную без ударения",
+        "Подбери слово, где на неё падает ударение",
+        "Пиши ту букву, что слышна под ударением"
+      ],
+      "examples": [
+        "ночам — ночь",
+        "далёкие — даль"
+      ]
+    },
+    {
+      "code": "ROOT_DICT",
+      "kidExplanation": "Эту букву не проверить ударением. Слово живёт в словарике — его запоминают с зацепкой.",
+      "steps": [
+        "Попробуй проверить ударением",
+        "Не выходит — это словарное слово",
+        "Запомни букву с зацепкой"
+      ],
+      "examples": [
+        "облака — пишем а",
+        "берёза — пишем е"
+      ]
+    },
+    {
+      "code": "ROOT_PAIRED_CONS",
+      "kidExplanation": "Парные согласные играют в прятки. Измени слово так, чтобы после согласной встала гласная.",
+      "steps": [
+        "Найди парную согласную: б-п, в-ф, г-к, д-т, ж-ш, з-с",
+        "Измени слово, чтобы после неё встала гласная",
+        "Пиши ту букву, что слышна"
+      ],
+      "examples": [
+        "вокруг — кругом",
+        "низкие — низенький"
+      ]
+    },
+    {
+      "code": "ROOT_SILENT_CONS",
+      "kidExplanation": "Бывает, что в слове прячется согласная, которую совсем не слышно. Подбери родственное слово, где она зазвучит, — и смело пиши её.",
+      "steps": [
+        "Подбери родственное слово",
+        "Послушай, не появилась ли в нём согласная",
+        "Слышна — значит, пиши её"
+      ],
+      "examples": [
+        "солнце — солнышко",
+        "звёздный — звезда"
+      ]
+    }
+  ],
+  "words": [
+    {
+      "id": "w1",
+      "text": "стояла",
+      "emoji": "🍂",
+      "context": "Вокруг стояла тишина.",
+      "stressIndex": 3,
+      "orthograms": [
+        {
+          "type": "ROOT_VOWEL_CHECK",
+          "index": 2,
+          "length": 1,
+          "correct": "о",
+          "distractors": [
+            "а"
+          ],
+          "method": {
+            "kind": "check_word",
+            "checkWord": "стой",
+            "checkStressIndex": 2
+          },
+          "confidence": "high",
+          "needsReview": false
+        }
+      ]
+    },
+    {
+      "id": "w2",
+      "text": "осень",
+      "emoji": "🍁",
+      "context": "За окном золотая осень.",
+      "stressIndex": 0,
+      "orthograms": [
+        {
+          "type": "ROOT_VOWEL_CHECK",
+          "index": 2,
+          "length": 1,
+          "correct": "е",
+          "distractors": [
+            "и"
+          ],
+          "method": {
+            "kind": "check_word",
+            "checkWord": "осенний",
+            "checkStressIndex": 2
+          },
+          "confidence": "medium",
+          "needsReview": true
+        }
+      ]
+    },
+    {
+      "id": "w3",
+      "text": "солнце",
+      "emoji": "☀️",
+      "context": "Солнце спряталось за тучу.",
+      "stressIndex": 1,
+      "orthograms": [
+        {
+          "type": "ROOT_SILENT_CONS",
+          "index": 2,
+          "length": 2,
+          "correct": "лн",
+          "distractors": [
+            "н"
+          ],
+          "method": {
+            "kind": "algorithm",
+            "steps": [
+              "Подбери родственное слово: солнышко",
+              "В нём буква л слышна",
+              "Значит, пиши её: солнце"
+            ]
+          },
+          "confidence": "high",
+          "needsReview": false
+        }
+      ]
+    },
+    {
+      "id": "w4",
+      "text": "видны",
+      "emoji": "👀",
+      "context": "С горы были видны крыши домов.",
+      "stressIndex": 4,
+      "orthograms": [
+        {
+          "type": "ROOT_VOWEL_CHECK",
+          "index": 1,
+          "length": 1,
+          "correct": "и",
+          "distractors": [
+            "е"
+          ],
+          "method": {
+            "kind": "check_word",
+            "checkWord": "виден",
+            "checkStressIndex": 1
+          },
+          "confidence": "high",
+          "needsReview": false
+        }
+      ]
+    },
+    {
+      "id": "w5",
+      "text": "далёкие",
+      "emoji": "🔭",
+      "context": "Над лесом плыли далёкие облака.",
+      "stressIndex": 3,
+      "orthograms": [
+        {
+          "type": "ROOT_VOWEL_CHECK",
+          "index": 1,
+          "length": 1,
+          "correct": "а",
+          "distractors": [
+            "о"
+          ],
+          "method": {
+            "kind": "check_word",
+            "checkWord": "даль",
+            "checkStressIndex": 1
+          },
+          "confidence": "high",
+          "needsReview": false
+        }
+      ]
+    },
+    {
+      "id": "w6",
+      "text": "облака",
+      "emoji": "☁️",
+      "context": "Облака закрыли всё небо.",
+      "stressIndex": 5,
+      "orthograms": [
+        {
+          "type": "ROOT_DICT",
+          "index": 3,
+          "length": 1,
+          "correct": "а",
+          "distractors": [
+            "о"
+          ],
+          "method": {
+            "kind": "mnemonic",
+            "mnemonic": "В серединке облаков спрятался ЛАК: об-ЛАК-а. Лак блестящий и гладкий, как облако на солнце."
+          },
+          "confidence": "high",
+          "needsReview": false
+        }
+      ]
+    },
+    {
+      "id": "w7",
+      "text": "ночам",
+      "emoji": "🌙",
+      "context": "По ночам стало холодно.",
+      "stressIndex": 3,
+      "orthograms": [
+        {
+          "type": "ROOT_VOWEL_CHECK",
+          "index": 1,
+          "length": 1,
+          "correct": "о",
+          "distractors": [
+            "а"
+          ],
+          "method": {
+            "kind": "check_word",
+            "checkWord": "ночь",
+            "checkStressIndex": 1
+          },
+          "confidence": "high",
+          "needsReview": false
+        }
+      ]
+    },
+    {
+      "id": "w8",
+      "text": "вокруг",
+      "emoji": "🧭",
+      "context": "Вокруг было тихо и пусто.",
+      "stressIndex": 4,
+      "orthograms": [
+        {
+          "type": "ROOT_PAIRED_CONS",
+          "index": 5,
+          "length": 1,
+          "correct": "г",
+          "distractors": [
+            "к"
+          ],
+          "method": {
+            "kind": "algorithm",
+            "steps": [
+              "Измени слово: кругом",
+              "После этой согласной встала гласная, и её слышно",
+              "Значит, пиши г: вокруг"
+            ]
+          },
+          "confidence": "medium",
+          "needsReview": true
+        }
+      ]
+    },
+    {
+      "id": "w9",
+      "text": "дрожали",
+      "emoji": "🍃",
+      "context": "От ветра дрожали листья.",
+      "stressIndex": 4,
+      "orthograms": [
+        {
+          "type": "ROOT_VOWEL_CHECK",
+          "index": 2,
+          "length": 1,
+          "correct": "о",
+          "distractors": [
+            "а"
+          ],
+          "method": {
+            "kind": "check_word",
+            "checkWord": "дрожь",
+            "checkStressIndex": 2
+          },
+          "confidence": "high",
+          "needsReview": false
+        }
+      ]
+    },
+    {
+      "id": "w10",
+      "text": "низкие",
+      "emoji": "⛅",
+      "context": "Над полем висели низкие тучи.",
+      "stressIndex": 1,
+      "orthograms": [
+        {
+          "type": "ROOT_PAIRED_CONS",
+          "index": 2,
+          "length": 1,
+          "correct": "з",
+          "distractors": [
+            "с"
+          ],
+          "method": {
+            "kind": "algorithm",
+            "steps": [
+              "Измени слово: низенький",
+              "После этой согласной встала гласная, и её слышно",
+              "Значит, пиши з: низкие"
+            ]
+          },
+          "confidence": "high",
+          "needsReview": false
+        }
+      ]
+    }
+  ],
+  "readingText": {
+    "text": "Осень пришла в лес. По ночам дрожали низкие звёзды, а к утру всё тонуло в тумане. Солнце вставало поздно и едва грело. Далёкие облака плыли над полем. Сквозь голые ветки были видны крыши деревни. Вокруг стояла тишина, и только сухой лист падал на тропинку.",
+    "questions": [
+      {
+        "q": "Что было видно сквозь голые ветки?",
+        "options": [
+          "облака",
+          "крыши деревни",
+          "тропинку"
+        ],
+        "answer": 1
+      },
+      {
+        "q": "Когда дрожали низкие звёзды?",
+        "options": [
+          "утром",
+          "днём",
+          "по ночам"
+        ],
+        "answer": 2
+      }
+    ]
+  }
+}
